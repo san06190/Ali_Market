@@ -339,9 +339,122 @@
       });
     }
 
-    function filterTenants(type) {
+   function filterTenants(type) {
       currentFilter = type;
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.className = "filter-btn text-gray-400 pb-1 ml-4";
       });
-      document.g
+      document.getElementById('filter-' + type).className = "filter-btn text-white font-bold pb-1 border-b-2 border-red-600";
+      renderList();
+    }
+
+    function updateChart(history) {
+      const ctx = document.getElementById('usageChart').getContext('2d');
+      const labels = history.map(h => h.month);
+      const data = history.map(h => h.units);
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Units Consumed',
+            data: data,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: '#ef4444',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } },
+            y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    function viewTenant(id) {
+      const t = tenants.find(item => item.id === id);
+      if (!t) return;
+
+      const detailSec = document.getElementById("detail-section");
+      detailSec.classList.remove("hidden");
+      detailSec.scrollIntoView({ behavior: 'smooth' });
+
+      const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
+      const today = new Date().toISOString().split('T')[0];
+      const isOverdue = t.dueDate < today && t.status === 'unpaid';
+      const baseAmount = t.amountDue;
+      const fineAmount = isOverdue ? t.fine : 0;
+      const totalAmount = baseAmount + fineAmount;
+
+      document.getElementById("card-name").innerText = t.name;
+      document.getElementById("card-prev").innerText = t.prevReading;
+      document.getElementById("card-curr").innerText = t.currReading;
+      document.getElementById("card-consumed").innerText = consumed;
+      document.getElementById("card-due").innerText = t.dueDate;
+      document.getElementById("card-orig").innerText = `₹${baseAmount.toLocaleString()}`;
+      document.getElementById("card-fine").innerText = `₹${fineAmount}`;
+      document.getElementById("card-total").innerText = `₹${totalAmount.toLocaleString()}`;
+
+      const badge = document.getElementById("card-badge");
+      if (t.status === 'paid') {
+        badge.innerText = "STATUS: PAID";
+        badge.className = "bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold";
+      } else if (isOverdue) {
+        badge.innerText = "STATUS: OVERDUE";
+        badge.className = "bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold shadow-[0_0_10px_rgba(220,38,38,0.5)]";
+      } else {
+        badge.innerText = "STATUS: PENDING";
+        badge.className = "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold";
+      }
+
+      // Action buttons
+      const btnWhatsapp = document.getElementById("btn-whatsapp");
+      const btnCall = document.getElementById("btn-call");
+
+      if (t.phone) {
+        const cleanPhone = t.phone.replace(/\D/g, '');
+        const waMsg = encodeURIComponent(
+          `Hello ${t.name},\nYour Electricity Bill for August 2026 is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}. Please pay promptly.`
+        );
+        btnWhatsapp.href = `https://wa.me/${cleanPhone}?text=${waMsg}`;
+        btnWhatsapp.classList.remove('opacity-50', 'pointer-events-none');
+        btnCall.href = `tel:+${cleanPhone}`;
+        btnCall.classList.remove('opacity-50', 'pointer-events-none');
+      } else {
+        btnWhatsapp.removeAttribute('href');
+        btnWhatsapp.classList.add('opacity-50', 'pointer-events-none');
+        btnCall.removeAttribute('href');
+        btnCall.classList.add('opacity-50', 'pointer-events-none');
+      }
+
+      updateChart(t.history || [{ month: 'Aug', units: consumed }]);
+    }
+
+    function downloadBillCard() {
+      const card = document.getElementById("bill-card");
+      html2canvas(card, { backgroundColor: '#111111', scale: 2 }).then(canvas => {
+        const link = document.createElement("a");
+        const name = document.getElementById("card-name").innerText.replace(/[^a-z0-9]/gi, '_');
+        link.download = `${name}_August_2026_Bill.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
+
+    // Initial render
+    renderList();
+  </script>
+</body>
+</html> 
