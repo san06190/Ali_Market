@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ali Market Electricity Manager</title>
-   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="icon.png" />
+  <title>Tenant Electricity Manager</title>
   
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="1000167585.png" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,11 +20,11 @@
   <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-lg">
     <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between sm:items-center gap-3">
       <div>
-        <h1 class="text-xl font-black text-white tracking-wide">⚡Ali Market Electricity Bill</h1>
+        <h1 class="text-xl font-black text-white tracking-wide">⚡ PowerBill Pro</h1>
         <div class="flex items-center gap-2 mt-1">
           <label class="text-xs text-gray-400">Billing Cycle:</label>
           <select id="cycle-select" onchange="switchCycle(this.value)" class="bg-gray-950 border border-gray-700 text-red-400 font-bold text-xs rounded-lg px-2 py-1 focus:ring-1 focus:ring-red-500">
-            <!-- Dynamically populated -->
+            <!-- Populated dynamically -->
           </select>
         </div>
       </div>
@@ -139,9 +140,9 @@
         <button onclick="downloadBillCard()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm border border-gray-700">
           📥 Save Image
         </button>
-        <a id="btn-whatsapp" href="#" target="_blank" class="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm text-center">
-          WhatsApp
-        </a>
+        <button id="btn-whatsapp" onclick="shareBillToWhatsApp()" class="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm text-center">
+          WhatsApp Bill
+        </button>
         <a id="btn-call" href="#" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm text-center">
           📞 Call
         </a>
@@ -221,11 +222,9 @@
       { id: "13", name: "Prahlad", phone: null, prevReading: 112, currReading: 120, consumed: 8, amountDue: 100, rate: 12.50, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 6}, {month: "Jul", units: 7}, {month: "Aug", units: 8}] }
     ];
 
-    // Master list of available billing cycles in localStorage
     let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
     let currentCycle = localStorage.getItem("powerbill_current_cycle") || "2026-08";
 
-    // Initial August seed
     if (!localStorage.getItem(`powerbill_data_2026-08`)) {
       localStorage.setItem(`powerbill_data_2026-08`, JSON.stringify(defaultAugustTenants));
     }
@@ -233,6 +232,7 @@
     let tenants = JSON.parse(localStorage.getItem(`powerbill_data_${currentCycle}`)) || defaultAugustTenants;
     let currentFilter = 'all';
     let chartInstance = null;
+    let selectedTenantForShare = null;
 
     function formatCycleLabel(cycleKey) {
       const [year, month] = cycleKey.split("-");
@@ -271,7 +271,6 @@
       renderList();
     }
 
-    // Auto-calculates amount inside modal
     function autoCalculateAmount() {
       const prev = Number(document.getElementById("in-prev").value) || 0;
       const curr = Number(document.getElementById("in-curr").value) || 0;
@@ -280,7 +279,6 @@
       document.getElementById("in-amount").value = Math.round(units * rate);
     }
 
-    // Carry over current readings as previous readings for the next cycle
     function startNextCyclePrompt() {
       const [currYear, currMonth] = currentCycle.split("-").map(Number);
       let nextMonth = currMonth + 1;
@@ -293,8 +291,6 @@
       const nextCycleName = formatCycleLabel(nextCycleKey);
 
       if (confirm(`Do you want to create a new billing cycle for "${nextCycleName}"?\n\n• Each tenant's current reading will become their previous reading.\n• Status will reset to Unpaid.`)) {
-        
-        const shortMonthName = new Date(nextYear, nextMonth - 1, 1).toLocaleDateString("en-US", { month: "short" });
         const defaultDueDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-15`;
 
         const newCycleTenants = tenants.map(t => {
@@ -306,7 +302,7 @@
             name: t.name,
             phone: t.phone,
             prevReading: carriedPrev,
-            currReading: carriedPrev, // initialized to prev until user inputs new reading
+            currReading: carriedPrev,
             consumed: 0,
             rate: t.rate || 13,
             amountDue: 0,
@@ -329,11 +325,10 @@
         initCycleSelector();
         renderList();
         closeDetails();
-        alert(`Switched to ${nextCycleName}! You can now click "✏️ Edit Reading" on any tenant to input their new current reading.`);
       }
     }
 
-        function openEditModal(id) {
+    function openEditModal(id) {
       const t = tenants.find(item => item.id === id);
       if (!t) return;
 
@@ -351,7 +346,7 @@
       toggleModal(true);
     }
 
-    function handleFormSubmit(e) {
+  function handleFormSubmit(e) {
       e.preventDefault();
       const editId = document.getElementById("edit-id").value;
       const prev = Number(document.getElementById("in-prev").value);
@@ -361,7 +356,6 @@
       const cycleShort = new Date(currentCycle + "-01").toLocaleDateString("en-US", { month: "short" });
 
       if (editId) {
-        // Updating existing tenant record
         const tenantIndex = tenants.findIndex(t => t.id === editId);
         if (tenantIndex !== -1) {
           const t = tenants[tenantIndex];
@@ -375,7 +369,6 @@
           t.fine = Number(document.getElementById("in-fine").value);
           t.dueDate = document.getElementById("in-date").value;
           
-          // Update current cycle in history
           if (!t.history) t.history = [];
           const histIdx = t.history.findIndex(h => h.month === cycleShort);
           if (histIdx !== -1) {
@@ -385,7 +378,6 @@
           }
         }
       } else {
-        // Creating new tenant record
         const newRecord = {
           id: Date.now().toString(),
           name: document.getElementById("in-name").value.trim(),
@@ -552,6 +544,8 @@
       const t = tenants.find(item => item.id === id);
       if (!t) return;
 
+      selectedTenantForShare = t;
+
       const detailSec = document.getElementById("detail-section");
       detailSec.classList.remove("hidden");
       detailSec.scrollIntoView({ behavior: 'smooth' });
@@ -586,27 +580,56 @@
         badge.className = "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold";
       }
 
-      // Action buttons
       const btnWhatsapp = document.getElementById("btn-whatsapp");
       const btnCall = document.getElementById("btn-call");
 
       if (t.phone) {
         const cleanPhone = t.phone.replace(/\D/g, '');
-        const waMsg = encodeURIComponent(
-          `Hello ${t.name},\nYour Electricity Bill for ${cycleFormatted} is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}. Please pay promptly.`
-        );
-        btnWhatsapp.href = `https://wa.me/${cleanPhone}?text=${waMsg}`;
         btnWhatsapp.classList.remove('opacity-50', 'pointer-events-none');
         btnCall.href = `tel:+${cleanPhone}`;
         btnCall.classList.remove('opacity-50', 'pointer-events-none');
       } else {
-        btnWhatsapp.removeAttribute('href');
         btnWhatsapp.classList.add('opacity-50', 'pointer-events-none');
         btnCall.removeAttribute('href');
         btnCall.classList.add('opacity-50', 'pointer-events-none');
       }
 
       updateChart(t.history);
+    }
+
+    async function shareBillToWhatsApp() {
+      if (!selectedTenantForShare) return;
+      const t = selectedTenantForShare;
+      const card = document.getElementById("bill-card");
+      const cleanPhone = t.phone ? t.phone.replace(/\D/g, '') : '';
+      const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
+      const isOverdue = t.dueDate < new Date().toISOString().split('T')[0] && t.status === 'unpaid';
+      const totalAmount = isOverdue ? t.amountDue + t.fine : t.amountDue;
+      const cycleFormatted = formatCycleLabel(currentCycle);
+
+      const textMsg = `Hello ${t.name},\nYour Electricity Bill for ${cycleFormatted} is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}. Please pay promptly.`;
+
+      try {
+        const canvas = await html2canvas(card, { backgroundColor: '#111111', scale: 2 });
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const file = new File([blob], `${t.name}_${currentCycle}_Bill.png`, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `Bill - ${t.name}`,
+            text: textMsg
+          });
+        } else {
+          downloadBillCard();
+          const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`;
+          window.open(waUrl, '_blank');
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`, '_blank');
+        }
+      }
     }
 
     function downloadBillCard() {
