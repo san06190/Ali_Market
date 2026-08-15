@@ -3,74 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tenant Electricity Manager</title>
+  <title>August 2026 Tenant Electricity Manager</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js for graphs -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- html2canvas for card images -->
+  <!-- html2canvas for card saving -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen pb-16 font-sans">
+<body class="bg-gray-950 text-gray-100 min-h-screen pb-20 font-sans">
 
-  <!-- Top Navigation Header -->
-  <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-md">
+  <!-- Header -->
+  <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-lg">
     <div class="max-w-4xl mx-auto flex justify-between items-center">
-      <h1 class="text-xl font-bold text-white tracking-wide">⚡Ali Market Electricity Bill</h1>
-      <button onclick="toggleModal(true)" class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg font-bold transition">
-        + New Bill
-      </button>
+      <div>
+        <h1 class="text-xl font-black text-white tracking-wide">⚡ PowerBill Pro</h1>
+        <p class="text-xs text-gray-400">August 2026 Billing Cycle</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="resetToAugustData()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-3 py-2 rounded-lg font-bold transition border border-gray-700">
+          🔄 Reset List
+        </button>
+        <button onclick="toggleModal(true)" class="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-4 py-2 rounded-lg font-bold transition">
+          + Add Tenant
+        </button>
+      </div>
     </div>
   </header>
 
   <main class="max-w-4xl mx-auto p-4 space-y-6">
 
-    <!-- Overview Stats -->
+    <!-- Stats Summary -->
     <section class="grid grid-cols-3 gap-3">
-      <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl text-center">
-        <p class="text-xs text-gray-400 font-bold uppercase">Total Tenants</p>
-        <p id="stat-total" class="text-2xl font-black text-white mt-1">0</p>
+      <div class="bg-gray-900 border border-gray-800 p-3 sm:p-4 rounded-xl text-center">
+        <p class="text-[10px] sm:text-xs text-gray-400 font-bold uppercase">Total Tenants</p>
+        <p id="stat-total" class="text-xl sm:text-2xl font-black text-white mt-1">0</p>
       </div>
-      <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl text-center">
-        <p class="text-xs text-green-400 font-bold uppercase">Paid</p>
-        <p id="stat-paid" class="text-2xl font-black text-green-500 mt-1">0</p>
+      <div class="bg-gray-900 border border-gray-800 p-3 sm:p-4 rounded-xl text-center">
+        <p class="text-[10px] sm:text-xs text-green-400 font-bold uppercase">Paid</p>
+        <p id="stat-paid" class="text-xl sm:text-2xl font-black text-green-500 mt-1">0</p>
       </div>
-      <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl text-center">
-        <p class="text-xs text-red-400 font-bold uppercase">Overdue</p>
-        <p id="stat-overdue" class="text-2xl font-black text-red-500 mt-1">0</p>
+      <div class="bg-gray-900 border border-gray-800 p-3 sm:p-4 rounded-xl text-center">
+        <p class="text-[10px] sm:text-xs text-red-400 font-bold uppercase">Overdue</p>
+        <p id="stat-overdue" class="text-xl sm:text-2xl font-black text-red-500 mt-1">0</p>
       </div>
     </section>
 
     <!-- Filters -->
     <div class="flex gap-2 border-b border-gray-800 pb-2 text-sm">
-      <button onclick="filterTenants('all')" class="filter-btn text-white font-bold pb-1 border-b-2 border-red-600" id="filter-all">All</button>
+      <button onclick="filterTenants('all')" class="filter-btn text-white font-bold pb-1 border-b-2 border-red-600" id="filter-all">All (13)</button>
       <button onclick="filterTenants('unpaid')" class="filter-btn text-gray-400 pb-1 ml-4" id="filter-unpaid">Pending / Overdue</button>
       <button onclick="filterTenants('paid')" class="filter-btn text-gray-400 pb-1 ml-4" id="filter-paid">Paid</button>
     </div>
 
-    <!-- Tenant Cards List -->
+    <!-- Tenant List -->
     <section id="tenant-list" class="space-y-3">
-      <!-- Tenant cards dynamically rendered here -->
+      <!-- Tenant cards rendered dynamically -->
     </section>
 
-    <!-- Tenant Analytics & Bill Card Preview Modal/Section -->
-    <section id="detail-section" class="hidden bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-6">
+    <!-- Detail View & Dark Bill Card Preview -->
+    <section id="detail-section" class="hidden bg-gray-900 border border-gray-800 rounded-2xl p-4 sm:p-6 space-y-6">
       <div class="flex justify-between items-center">
-        <h2 class="text-lg font-bold text-white" id="detail-title">Tenant History</h2>
-        <button onclick="closeDetails()" class="text-gray-400 text-sm hover:text-white">✕ Close</button>
+        <h2 class="text-lg font-bold text-white">Bill Summary & Graph</h2>
+        <button onclick="closeDetails()" class="text-gray-400 text-sm hover:text-white bg-gray-800 px-3 py-1 rounded-lg">✕ Close</button>
       </div>
 
-      <!-- Chart Container -->
+      <!-- Graph -->
       <div class="bg-gray-950 p-4 rounded-xl border border-gray-800">
-        <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Monthly Units Consumed</h3>
+        <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Consumption Trend (Units)</h3>
         <canvas id="usageChart" height="120"></canvas>
       </div>
 
-      <!-- Downloadable Bill Card Preview -->
+      <!-- Dark-Themed Bill Card for Image Export -->
       <div class="flex justify-center">
-        <div id="bill-card" class="w-full max-w-sm bg-[#111111] text-gray-200 overflow-hidden relative font-sans shadow-2xl pb-8 border border-gray-800 rounded-xl">
+        <div id="bill-card" class="w-full max-w-sm bg-[#111111] text-gray-200 overflow-hidden relative font-sans shadow-2xl pb-8 border border-gray-800 rounded-2xl">
           
           <div class="flex justify-between items-center pt-8 pb-6 pl-6 pr-0">
-            <h1 class="text-3xl font-bold text-white tracking-tight" id="card-name">Umair</h1>
+            <h1 class="text-2xl font-black text-white tracking-tight" id="card-name">Umair</h1>
             <div id="card-badge" class="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold tracking-widest">
               STATUS: OVERDUE
             </div>
@@ -80,13 +88,13 @@
             <div>
               <h2 class="text-xs font-bold text-white tracking-wide mb-1 uppercase">Account Summary</h2>
               <hr class="border-gray-700 mb-2">
-              <div class="space-y-1 text-sm">
-                <div class="flex justify-between"><span class="text-gray-400">Previous Reading:</span><span id="card-prev">0</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Current Reading:</span><span id="card-curr">0</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Units Consumed:</span><span id="card-consumed">0</span></div>
+              <div class="space-y-1.5 text-sm">
+                <div class="flex justify-between"><span class="text-gray-400">Previous Reading:</span><span id="card-prev" class="text-gray-200">0</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Current Reading:</span><span id="card-curr" class="text-gray-200">0</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Units Consumed:</span><span id="card-consumed" class="text-gray-200">0</span></div>
                 <div class="flex justify-between items-center">
                   <span class="text-gray-400">Due Date:</span>
-                  <span class="text-gray-300" id="card-due">15/08/2026</span>
+                  <span class="text-gray-200 font-mono" id="card-due">15/08/2026</span>
                 </div>
               </div>
             </div>
@@ -95,27 +103,35 @@
               <h2 class="text-xs font-bold text-white tracking-wide mb-1 uppercase">Payment Details</h2>
               <hr class="border-gray-700 mb-2">
               <div class="space-y-1 text-sm mb-3">
-                <div class="flex justify-between"><span class="text-gray-400">Original Amount:</span><span id="card-orig">₹0</span></div>
-                <div class="flex justify-between"><span class="text-red-500">Late Fine:</span><span class="text-red-500" id="card-fine">₹0</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Original Amount:</span><span id="card-orig" class="text-gray-200">₹0</span></div>
+                <div class="flex justify-between"><span class="text-red-400">Late Fine Applied:</span><span class="text-red-400" id="card-fine">₹0</span></div>
               </div>
-              <div class="bg-gradient-to-r from-red-950 via-red-900 to-red-950 border border-red-500/30 rounded-xl p-3 flex justify-between items-center">
-                 <span class="text-red-400 font-bold uppercase text-xs">Total Amount Due:</span> 
-                 <span class="text-red-400 font-bold text-xl" id="card-total">₹0</span>
+              <div class="bg-gradient-to-r from-red-950 via-red-900 to-red-950 border border-red-500/30 rounded-xl p-3 flex justify-between items-center shadow-[0_0_15px_rgba(220,38,38,0.2)]">
+                 <span class="text-red-400 font-bold uppercase text-xs">Total Amount:</span> 
+                 <span class="text-red-400 font-black text-2xl" id="card-total">₹0</span>
               </div>
+            </div>
+
+            <div>
+              <h2 class="text-xs font-bold text-white tracking-wide mb-1 uppercase">Payment Notice:</h2>
+              <hr class="border-gray-700 mb-2">
+              <p class="text-gray-400 text-xs leading-relaxed" id="card-notice">
+                Note: ₹50 late fine applies after the due date. Please pay promptly to avoid disruption.
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Actions -->
+      <!-- Action Buttons -->
       <div class="flex flex-wrap gap-2 justify-center max-w-sm mx-auto">
-        <button onclick="downloadBillCard()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm border border-gray-700">
+        <button onclick="downloadBillCard()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm border border-gray-700">
           📥 Save Image
         </button>
-        <a id="btn-whatsapp" href="#" target="_blank" class="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2.5 px-4 rounded-xl text-sm text-center">
+        <a id="btn-whatsapp" href="#" target="_blank" class="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm text-center">
           WhatsApp
         </a>
-        <a id="btn-call" href="#" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 px-4 rounded-xl text-sm text-center">
+        <a id="btn-call" href="#" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm text-center">
           📞 Call
         </a>
       </div>
@@ -123,34 +139,34 @@
 
   </main>
 
-  <!-- Add New Bill Modal -->
+  <!-- Add New Tenant Modal -->
   <div id="modal-new" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-md space-y-4">
-      <h2 class="text-lg font-bold text-white">Generate Tenant Bill</h2>
+      <h2 class="text-lg font-bold text-white">Add Tenant Bill</h2>
       
-      <form id="bill-form" class="space-y-3 text-sm">
+      <form id="bill-form" onsubmit="handleFormSubmit(event)" class="space-y-3 text-sm">
         <div>
           <label class="text-gray-400 block mb-1">Tenant Name</label>
-          <input required id="in-name" type="text" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="e.g. Umair">
+          <input required id="in-name" type="text" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="e.g. Rahul">
         </div>
         <div>
-          <label class="text-gray-400 block mb-1">Phone (with country code)</label>
-          <input required id="in-phone" type="tel" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="e.g. 919876543210">
+          <label class="text-gray-400 block mb-1">Phone Number (with Country Code)</label>
+          <input id="in-phone" type="tel" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="919876543210">
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="text-gray-400 block mb-1">Prev Reading</label>
-            <input required id="in-prev" type="number" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="1909">
+            <input required id="in-prev" type="number" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="1000">
           </div>
           <div>
             <label class="text-gray-400 block mb-1">Curr Reading</label>
-            <input required id="in-curr" type="number" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="2005">
+            <input required id="in-curr" type="number" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="1068">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="text-gray-400 block mb-1">Rate per Unit (₹)</label>
-            <input required id="in-rate" type="number" value="10" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
+            <label class="text-gray-400 block mb-1">Amount Due (₹)</label>
+            <input required id="in-amount" type="number" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="1000">
           </div>
           <div>
             <label class="text-gray-400 block mb-1">Late Fine (₹)</label>
@@ -159,7 +175,7 @@
         </div>
         <div>
           <label class="text-gray-400 block mb-1">Due Date</label>
-          <input required id="in-date" type="date" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
+          <input required id="in-date" type="date" value="2026-08-15" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
         </div>
 
         <div class="flex gap-2 pt-2">
@@ -171,90 +187,46 @@
   </div>
 
   <script>
-    // State management backed by LocalStorage (Easily upgraded to Firebase)
-    let tenants = JSON.parse(localStorage.getItem("tenants_data")) || [
-      {
-        id: "1",
-        name: "Umair",
-        phone: "919876543210",
-        prevReading: 1909,
-        currReading: 2005,
-        rate: 13,
-        fine: 50,
-        dueDate: "2026-07-15",
-        status: "unpaid",
-        history: [
-          { month: "May", units: 80 },
-          { month: "Jun", units: 92 },
-          { month: "Jul", units: 96 }
-        ]
-      }
+    // Clean raw dataset from August 2026 records
+    const defaultAugustTenants = [
+      { id: "1", name: "Wamik", phone: "919839265798", prevReading: 7109, currReading: 7604, consumed: 495, amountDue: 6440, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 450}, {month: "Jul", units: 475}, {month: "Aug", units: 495}] },
+      { id: "2", name: "Nehal", phone: "919696979583", prevReading: 757, currReading: 956, consumed: 199, amountDue: 2590, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 175}, {month: "Jul", units: 188}, {month: "Aug", units: 199}] },
+      { id: "3", name: "Danish", phone: "919161835537", prevReading: 720, currReading: 811, consumed: 91, amountDue: 1180, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 80}, {month: "Jul", units: 85}, {month: "Aug", units: 91}] },
+      { id: "4", name: "Shahid", phone: "917754017685", prevReading: 5337, currReading: 5413, consumed: 76, amountDue: 990, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 70}, {month: "Jul", units: 72}, {month: "Aug", units: 76}] },
+      { id: "5", name: "Akram", phone: "919628285790", prevReading: 915, currReading: 975, consumed: 60, amountDue: 780, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 54}, {month: "Jul", units: 58}, {month: "Aug", units: 60}] },
+      { id: "6", name: "Zeeshan", phone: "919305062462", prevReading: 1498, currReading: 1556, consumed: 58, amountDue: 750, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 50}, {month: "Jul", units: 55}, {month: "Aug", units: 58}] },
+      { id: "7", name: "Umair", phone: "916390548353", prevReading: 2005, currReading: 2057, consumed: 52, amountDue: 680, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 45}, {month: "Jul", units: 48}, {month: "Aug", units: 52}] },
+      { id: "8", name: "Amit", phone: "919838166073", prevReading: 467, currReading: 516, consumed: 49, amountDue: 640, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 40}, {month: "Jul", units: 44}, {month: "Aug", units: 49}] },
+      { id: "9", name: "Jane Alam (Hafiz Ji)", phone: "919838592132", prevReading: 871, currReading: 905, consumed: 34, amountDue: 440, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 30}, {month: "Jul", units: 32}, {month: "Aug", units: 34}] },
+      { id: "10", name: "Abu Bakar", phone: "919198002777", prevReading: 523, currReading: 556, consumed: 33, amountDue: 430, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 28}, {month: "Jul", units: 30}, {month: "Aug", units: 33}] },
+      { id: "11", name: "Ashfaque", phone: "919936016464", prevReading: 724, currReading: 754, consumed: 30, amountDue: 390, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 25}, {month: "Jul", units: 28}, {month: "Aug", units: 30}] },
+      { id: "12", name: "Gopal", phone: "919936334701", prevReading: 571, currReading: 596, consumed: 25, amountDue: 330, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 20}, {month: "Jul", units: 22}, {month: "Aug", units: 25}] },
+      { id: "13", name: "Prahlad", phone: null, prevReading: 112, currReading: 120, consumed: 8, amountDue: 100, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 6}, {month: "Jul", units: 7}, {month: "Aug", units: 8}] }
     ];
 
+    let tenants = JSON.parse(localStorage.getItem("august_tenants_data")) || defaultAugustTenants;
     let currentFilter = 'all';
     let chartInstance = null;
 
     function saveState() {
-      localStorage.setItem("tenants_data", JSON.stringify(tenants));
+      localStorage.setItem("august_tenants_data", JSON.stringify(tenants));
       renderList();
     }
 
-    function toggleModal(show) {
-      document.getElementById('modal-new').classList.toggle('hidden', !show);
+    function resetToAugustData() {
+      if (confirm("Reset the list back to default August 2026 bills?")) {
+        tenants = JSON.parse(JSON.stringify(defaultAugustTenants));
+        saveState();
+        closeDetails();
+      }
     }
 
-    function renderList() {
-      const listEl = document.getElementById("tenant-list");
-      listEl.innerHTML = "";
-
-      let paidCount = 0;
-      let overdueCount = 0;
-
-      const filtered = tenants.filter(t => {
-        const isOverdue = new Date(t.dueDate) < new Date() && t.status === 'unpaid';
-        if (t.status === 'paid') paidCount++;
-        if (isOverdue) overdueCount++;
-
-        if (currentFilter === 'paid') return t.status === 'paid';
-        if (currentFilter === 'unpaid') return t.status === 'unpaid';
-        return true;
-      });
-
-      document.getElementById('stat-total').innerText = tenants.length;
-      document.getElementById('stat-paid').innerText = paidCount;
-      document.getElementById('stat-overdue').innerText = overdueCount;
-
-      filtered.forEach(t => {
-        const consumed = t.currReading - t.prevReading;
-        const isOverdue = new Date(t.dueDate) < new Date() && t.status === 'unpaid';
-        const baseAmount = consumed * t.rate;
-        const total = isOverdue ? baseAmount + t.fine : baseAmount;
-
-        const card = document.createElement("div");
-        card.className = "bg-gray-900 border border-gray-800 p-4 rounded-xl flex items-center justify-between";
-        card.innerHTML = `
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="font-bold text-white">${t.name}</h3>
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                t.status === 'paid' ? 'bg-green-900/60 text-green-400 border border-green-700/50' : 
-                isOverdue ? 'bg-red-900/60 text-red-400 border border-red-700/50' : 'bg-yellow-900/60 text-yellow-400'
-              }">${t.status === 'paid' ? 'PAID' : isOverdue ? 'OVERDUE' : 'PENDING'}</span>
-            </div>
-            <p class="text-xs text-gray-400 mt-1">${consumed} units (${t.prevReading} → ${t.currReading})</p>
-            <p class="text-sm font-black text-gray-200 mt-1">₹${total}</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <button onclick="togglePaid('${t.id}')" class="text-xs px-3 py-2 rounded-lg font-bold border ${t.status === 'paid' ? 'border-gray-700 text-gray-400' : 'border-green-600 bg-green-600/10 text-green-400'}">
-              ${t.status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
-            </button>
-            <button onclick="viewTenant('${t.id}')" class="text-xs bg-gray-800 text-gray-200 px-3 py-2 rounded-lg font-bold hover:bg-gray-700">
-              View Card
-            </button>
-          </div>
-        `;
-        listEl.appendChild(card);
-      });
+    function deleteTenant(id, name) {
+      if (confirm(`Are you sure you want to delete the record for "${name}"?`)) {
+        tenants = tenants.filter(t => t.id !== id);
+        saveState();
+        closeDetails();
+      }
     }
 
     function togglePaid(id) {
@@ -265,133 +237,111 @@
       }
     }
 
-    function filterTenants(type) {
-      currentFilter = type;
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.className = "filter-btn text-gray-400 pb-1 ml-4";
-      });
-      document.getElementById('filter-' + type).className = "filter-btn text-white font-bold pb-1 border-b-2 border-red-600";
-      renderList();
-    }
-
-    function viewTenant(id) {
-      const t = tenants.find(item => item.id === id);
-      if (!t) return;
-
-      const detailSec = document.getElementById("detail-section");
-      detailSec.classList.remove("hidden");
-      detailSec.scrollIntoView({ behavior: 'smooth' });
-
-      // Populate Card Details
-      const consumed = t.currReading - t.prevReading;
-      const isOverdue = new Date(t.dueDate) < new Date() && t.status === 'unpaid';
-      const baseAmount = consumed * t.rate;
-      const fineAmount = isOverdue ? t.fine : 0;
-      const totalAmount = baseAmount + fineAmount;
-
-      document.getElementById("card-name").innerText = t.name;
-      document.getElementById("card-prev").innerText = t.prevReading;
-      document.getElementById("card-curr").innerText = t.currReading;
-      document.getElementById("card-consumed").innerText = consumed;
-      document.getElementById("card-due").innerText = t.dueDate;
-      document.getElementById("card-orig").innerText = `₹${baseAmount}`;
-      document.getElementById("card-fine").innerText = `₹${fineAmount}`;
-      document.getElementById("card-total").innerText = `₹${totalAmount}`;
-
-      const badge = document.getElementById("card-badge");
-      if (t.status === 'paid') {
-        badge.innerText = "STATUS: PAID";
-        badge.className = "bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold";
-      } else if (isOverdue) {
-        badge.innerText = "STATUS: OVERDUE";
-        badge.className = "bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold";
-      } else {
-        badge.innerText = "STATUS: PENDING";
-        badge.className = "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold";
-      }
-
-      // Preload Direct Actions
-      document.getElementById("btn-call").href = `tel:+${t.phone}`;
-      const msg = encodeURIComponent(`Hi ${t.name}, your electricity bill of ₹${totalAmount} is ${isOverdue ? 'OVERDUE' : 'due on ' + t.dueDate}. Units consumed: ${consumed}. Please pay promptly.`);
-      document.getElementById("btn-whatsapp").href = `https://wa.me/${t.phone}?text=${msg}`;
-
-      // Render Graph
-      renderChart(t);
-    }
-
-    function renderChart(tenant) {
-      const ctx = document.getElementById('usageChart').getContext('2d');
-      if (chartInstance) chartInstance.destroy();
-
-      const labels = tenant.history ? tenant.history.map(h => h.month) : ['Current'];
-      const data = tenant.history ? tenant.history.map(h => h.units) : [tenant.currReading - tenant.prevReading];
-
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Units Consumed',
-            data: data,
-            borderColor: '#dc2626',
-            backgroundColor: 'rgba(220, 38, 38, 0.1)',
-            tension: 0.3,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } },
-            y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } }
-          }
-        }
-      });
+    function toggleModal(show) {
+      document.getElementById('modal-new').classList.toggle('hidden', !show);
     }
 
     function closeDetails() {
       document.getElementById("detail-section").classList.add("hidden");
     }
 
-    function downloadBillCard() {
-      const card = document.getElementById("bill-card");
-      html2canvas(card, { backgroundColor: '#111111' }).then(canvas => {
-        const link = document.createElement("a");
-        link.download = `Bill_${document.getElementById('card-name').innerText}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const prev = Number(document.getElementById("in-prev").value);
+      const curr = Number(document.getElementById("in-curr").value);
+      const consumed = Math.max(0, curr - prev);
+      const rawPhone = document.getElementById("in-phone").value.replace(/\D/g, '');
+
+      const newRecord = {
+        id: Date.now().toString(),
+        name: document.getElementById("in-name").value.trim(),
+        phone: rawPhone || null,
+        prevReading: prev,
+        currReading: curr,
+        consumed: consumed,
+        amountDue: Number(document.getElementById("in-amount").value),
+        fine: Number(document.getElementById("in-fine").value),
+        dueDate: document.getElementById("in-date").value,
+        status: "unpaid",
+        history: [
+          { month: "Jun", units: Math.round(consumed * 0.9) },
+          { month: "Jul", units: Math.round(consumed * 0.95) },
+          { month: "Aug", units: consumed }
+        ]
+      };
+
+      tenants.unshift(newRecord);
+      saveState();
+      document.getElementById("bill-form").reset();
+      toggleModal(false);
+    }
+
+    function renderList() {
+      const listEl = document.getElementById("tenant-list");
+      listEl.innerHTML = "";
+
+      let paidCount = 0;
+      let overdueCount = 0;
+      const today = new Date().toISOString().split('T')[0];
+
+      tenants.forEach(t => {
+        const isOverdue = t.dueDate < today && t.status === 'unpaid';
+        if (t.status === 'paid') paidCount++;
+        if (isOverdue) overdueCount++;
+      });
+
+      const filtered = tenants.filter(t => {
+        const isOverdue = t.dueDate < today && t.status === 'unpaid';
+        if (currentFilter === 'paid') return t.status === 'paid';
+        if (currentFilter === 'unpaid') return t.status === 'unpaid';
+        return true;
+      });
+
+      document.getElementById('stat-total').innerText = tenants.length;
+      document.getElementById('stat-paid').innerText = paidCount;
+      document.getElementById('stat-overdue').innerText = overdueCount;
+      document.getElementById('filter-all').innerText = `All (${tenants.length})`;
+
+      filtered.forEach(t => {
+        const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
+        const isOverdue = t.dueDate < today && t.status === 'unpaid';
+        const baseAmount = t.amountDue;
+        const total = isOverdue ? baseAmount + t.fine : baseAmount;
+
+        const card = document.createElement("div");
+        card.className = "bg-gray-900 border border-gray-800 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3";
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-white text-base">${t.name}</h3>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                t.status === 'paid' ? 'bg-green-900/60 text-green-400 border border-green-700/50' : 
+                isOverdue ? 'bg-red-900/60 text-red-400 border border-red-700/50' : 'bg-yellow-900/60 text-yellow-400'
+              }">${t.status === 'paid' ? 'PAID' : isOverdue ? 'OVERDUE' : 'PENDING'}</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">${consumed} Units (${t.prevReading} → ${t.currReading}) • Due: ${t.dueDate}</p>
+            <p class="text-base font-black text-gray-100 mt-1">₹${total.toLocaleString()} <span class="text-xs font-normal text-gray-400">(Base: ₹${baseAmount.toLocaleString()}${isOverdue ? ' + ₹50 Fine' : ''})</span></p>
+          </div>
+          
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="togglePaid('${t.id}')" class="text-xs px-3 py-2 rounded-lg font-bold border ${t.status === 'paid' ? 'border-gray-700 text-gray-400' : 'border-green-600 bg-green-600/10 text-green-400'}">
+              ${t.status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
+            </button>
+            <button onclick="viewTenant('${t.id}')" class="text-xs bg-gray-800 text-gray-200 px-3 py-2 rounded-lg font-bold hover:bg-gray-700">
+              View Card
+            </button>
+            <button onclick="deleteTenant('${t.id}', '${t.name}')" class="text-xs bg-red-950/60 text-red-400 border border-red-800/60 px-2.5 py-2 rounded-lg font-bold hover:bg-red-900/80 transition" title="Delete Record">
+              🗑️
+            </button>
+          </div>
+        `;
+        listEl.appendChild(card);
       });
     }
 
-    // Handle Form Submit
-    document.getElementById("bill-form").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const prev = parseInt(document.getElementById("in-prev").value);
-      const curr = parseInt(document.getElementById("in-curr").value);
-      const consumed = curr - prev;
-
-      const newTenant = {
-        id: Date.now().toString(),
-        name: document.getElementById("in-name").value,
-        phone: document.getElementById("in-phone").value,
-        prevReading: prev,
-        currReading: curr,
-        rate: parseFloat(document.getElementById("in-rate").value),
-        fine: parseFloat(document.getElementById("in-fine").value),
-        dueDate: document.getElementById("in-date").value,
-        status: "unpaid",
-        history: [{ month: 'Current', units: consumed }]
-      };
-
-      tenants.unshift(newTenant);
-      saveState();
-      toggleModal(false);
-      this.reset();
-    });
-
-    // Initialize
-    renderList();
-  </script>
-</body>
-</html>
+    function filterTenants(type) {
+      currentFilter = type;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.className = "filter-btn text-gray-400 pb-1 ml-4";
+      });
+      document.g
