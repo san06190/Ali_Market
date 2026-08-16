@@ -6,7 +6,7 @@
   <title>Tenant Electricity Manager</title>
   
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="1000167585.png" />
+  <link rel="icon" type="image/png" href="icon.png" />
 
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js -->
@@ -87,7 +87,7 @@
             </tr>
           </thead>
           <tbody id="collection-history-body" class="divide-y divide-gray-800">
-            <!-- Rendered dynamically -->
+            <!-- Populated dynamically -->
           </tbody>
         </table>
       </div>
@@ -120,51 +120,62 @@
 
       <!-- Dark-Themed Bill Card for Image Export -->
       <div class="flex justify-center">
-        <div id="bill-card" class="w-full max-w-sm bg-[#111111] text-gray-200 overflow-hidden relative font-sans shadow-2xl pb-8 border border-gray-800 rounded-2xl">
+        <div id="bill-card" class="w-full max-w-sm bg-[#111111] text-gray-200 overflow-hidden relative font-sans shadow-2xl pb-6 border border-gray-800 rounded-2xl">
           
-          <div class="flex justify-between items-center pt-8 pb-6 pl-6 pr-0">
+          <div class="flex justify-between items-start pt-6 pb-4 pl-6 pr-0">
             <div>
-              <h1 class="text-2xl font-black text-white tracking-tight" id="card-name">Umair</h1>
-              <p class="text-[11px] text-gray-400 font-bold" id="card-cycle-label">August 2026</p>
+              <h1 class="text-2xl font-black text-white tracking-tight" id="card-name">--</h1>
+              <p class="text-xs font-semibold text-yellow-400 mt-0.5" id="card-cycle-label">August 2026</p>
             </div>
-            <div id="card-badge" class="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold tracking-widest">
+            <div id="card-badge" class="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black tracking-widest uppercase">
               STATUS: OVERDUE
             </div>
           </div>
 
-          <div class="px-6 space-y-5">
+          <div class="px-6 space-y-4">
+            
+            <!-- Generation and Payment Dates -->
+            <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span class="text-gray-500 block text-[10px] uppercase font-bold">Bill Generated</span>
+                <span id="card-gen-date" class="text-gray-200 font-mono font-bold">--</span>
+              </div>
+              <div>
+                <span class="text-gray-500 block text-[10px] uppercase font-bold">Payment Status Date</span>
+                <span id="card-pay-date" class="text-emerald-400 font-mono font-bold">Not Paid Yet</span>
+              </div>
+            </div>
+
             <div>
-              <h2 class="text-xs font-bold text-white tracking-wide mb-1 uppercase">Account Summary</h2>
-              <hr class="border-gray-700 mb-2">
-              <div class="space-y-1.5 text-sm">
-                <div class="flex justify-between"><span class="text-gray-400">Previous Reading:</span><span id="card-prev" class="text-gray-200">0</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Current Reading:</span><span id="card-curr" class="text-gray-200">0</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Units Consumed:</span><span id="card-consumed" class="text-gray-200">0</span></div>
+              <h2 class="text-[11px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Account Summary</h2>
+              <hr class="border-gray-800 mb-2">
+              <div class="space-y-1.5 text-xs sm:text-sm">
+                <div class="flex justify-between"><span class="text-gray-400">Previous Reading:</span><span id="card-prev" class="text-gray-200 font-mono">0</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Current Reading:</span><span id="card-curr" class="text-gray-200 font-mono">0</span></div>
+                <div class="flex justify-between font-bold"><span class="text-gray-300">Units Consumed:</span><span id="card-consumed" class="text-white font-mono">0</span></div>
                 <div class="flex justify-between items-center">
                   <span class="text-gray-400">Due Date:</span>
-                  <span class="text-gray-200 font-mono" id="card-due">15/08/2026</span>
+                  <span class="text-red-400 font-mono font-bold" id="card-due">15/08/2026</span>
                 </div>
               </div>
             </div>
 
             <div>
-              <h2 class="text-xs font-bold text-white tracking-wide mb-1 uppercase">Payment Details</h2>
-              <hr class="border-gray-700 mb-2">
-              <div class="space-y-1 text-sm mb-3">
-                <div class="flex justify-between"><span class="text-gray-400">Original Amount:</span><span id="card-orig" class="text-gray-200">₹0</span></div>
-                <div class="flex justify-between"><span class="text-red-400">Late Fine Applied:</span><span class="text-red-400" id="card-fine">₹0</span></div>
+              <h2 class="text-[11px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Payment Details</h2>
+              <hr class="border-gray-800 mb-2">
+              <div class="space-y-1 text-xs sm:text-sm mb-3">
+                <div class="flex justify-between"><span class="text-gray-400">Base Energy Amount:</span><span id="card-orig" class="text-gray-200 font-mono">₹0</span></div>
+                <div class="flex justify-between"><span class="text-red-400">Late Fine Applied:</span><span class="text-red-400 font-mono" id="card-fine">₹0</span></div>
               </div>
               <div class="bg-gradient-to-r from-red-950 via-red-900 to-red-950 border border-red-500/30 rounded-xl p-3 flex justify-between items-center shadow-[0_0_15px_rgba(220,38,38,0.2)]">
                  <span class="text-red-400 font-bold uppercase text-xs">Total Amount:</span> 
-                 <span class="text-red-400 font-black text-2xl" id="card-total">₹0</span>
+                 <span class="text-red-400 font-black text-2xl font-mono" id="card-total">₹0</span>
               </div>
             </div>
 
             <div>
-              <h2 class="text-xs font-bold text-white tracking-wide mb-1 uppercase">Payment Notice:</h2>
-              <hr class="border-gray-700 mb-2">
-              <p class="text-gray-400 text-xs leading-relaxed">
-                Note: ₹50 late fine applies after the due date. Please pay promptly to avoid disruption.
+              <p class="text-gray-400 text-xs leading-relaxed text-center italic pt-1">
+                Note: ₹50 late fine applies after the due date. Please pay promptly.
               </p>
             </div>
           </div>
@@ -243,19 +254,19 @@
 
   <script>
     const defaultAugustTenants = [
-      { id: "1", name: "Abu Bakar", phone: "919198002777", prevReading: 523, currReading: 556, consumed: 33, amountDue: 430, rate: 13.03, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 28}, {month: "Jul", units: 30}, {month: "Aug", units: 33}] },
-      { id: "2", name: "Akram", phone: "919628285790", prevReading: 915, currReading: 975, consumed: 60, amountDue: 780, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 54}, {month: "Jul", units: 58}, {month: "Aug", units: 60}] },
-      { id: "3", name: "Amit", phone: "919838166073", prevReading: 467, currReading: 516, consumed: 49, amountDue: 640, rate: 13.06, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 40}, {month: "Jul", units: 44}, {month: "Aug", units: 49}] },
-      { id: "4", name: "Ashfaque", phone: "919936016464", prevReading: 724, currReading: 754, consumed: 30, amountDue: 390, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 25}, {month: "Jul", units: 28}, {month: "Aug", units: 30}] },
-      { id: "5", name: "Danish", phone: "919161835537", prevReading: 720, currReading: 811, consumed: 91, amountDue: 1180, rate: 12.96, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 80}, {month: "Jul", units: 85}, {month: "Aug", units: 91}] },
-      { id: "6", name: "Gopal", phone: "919936334701", prevReading: 571, currReading: 596, consumed: 25, amountDue: 330, rate: 13.20, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 20}, {month: "Jul", units: 22}, {month: "Aug", units: 25}] },
-      { id: "7", name: "Jane Alam (Hafiz Ji)", phone: "919838592132", prevReading: 871, currReading: 905, consumed: 34, amountDue: 440, rate: 12.94, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 30}, {month: "Jul", units: 32}, {month: "Aug", units: 34}] },
-      { id: "8", name: "Nehal", phone: "919696979583", prevReading: 757, currReading: 956, consumed: 199, amountDue: 2590, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 175}, {month: "Jul", units: 188}, {month: "Aug", units: 199}] },
-      { id: "9", name: "Prahlad", phone: "919125631494", prevReading: 112, currReading: 120, consumed: 8, amountDue: 100, rate: 12.50, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 6}, {month: "Jul", units: 7}, {month: "Aug", units: 8}] },
-      { id: "10", name: "Shahid", phone: "917754017685", prevReading: 5337, currReading: 5413, consumed: 76, amountDue: 990, rate: 13.02, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 70}, {month: "Jul", units: 72}, {month: "Aug", units: 76}] },
-      { id: "11", name: "Umair", phone: "916390548353", prevReading: 2005, currReading: 2057, consumed: 52, amountDue: 680, rate: 13.07, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 45}, {month: "Jul", units: 48}, {month: "Aug", units: 52}] },
-      { id: "12", name: "Wamik", phone: "919839265798", prevReading: 7109, currReading: 7604, consumed: 495, amountDue: 6440, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 450}, {month: "Jul", units: 475}, {month: "Aug", units: 495}] },
-      { id: "13", name: "Zeeshan", phone: "919305062462", prevReading: 1498, currReading: 1556, consumed: 58, amountDue: 750, rate: 12.93, fine: 50, dueDate: "2026-08-15", status: "unpaid", history: [{month: "Jun", units: 50}, {month: "Jul", units: 55}, {month: "Aug", units: 58}] }
+      { id: "1", name: "Abu Bakar", phone: "919198002777", prevReading: 523, currReading: 556, consumed: 33, amountDue: 430, rate: 13.03, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 28}, {month: "Jul", units: 30}, {month: "Aug", units: 33}] },
+      { id: "2", name: "Akram", phone: "919628285790", prevReading: 915, currReading: 975, consumed: 60, amountDue: 780, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 54}, {month: "Jul", units: 58}, {month: "Aug", units: 60}] },
+      { id: "3", name: "Amit", phone: "919838166073", prevReading: 467, currReading: 516, consumed: 49, amountDue: 640, rate: 13.06, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 40}, {month: "Jul", units: 44}, {month: "Aug", units: 49}] },
+      { id: "4", name: "Ashfaque", phone: "919936016464", prevReading: 724, currReading: 754, consumed: 30, amountDue: 390, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 25}, {month: "Jul", units: 28}, {month: "Aug", units: 30}] },
+      { id: "5", name: "Danish", phone: "919161835537", prevReading: 720, currReading: 811, consumed: 91, amountDue: 1180, rate: 12.96, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 80}, {month: "Jul", units: 85}, {month: "Aug", units: 91}] },
+      { id: "6", name: "Gopal", phone: "919936334701", prevReading: 571, currReading: 596, consumed: 25, amountDue: 330, rate: 13.20, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 20}, {month: "Jul", units: 22}, {month: "Aug", units: 25}] },
+      { id: "7", name: "Jane Alam (Hafiz Ji)", phone: "919838592132", prevReading: 871, currReading: 905, consumed: 34, amountDue: 440, rate: 12.94, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 30}, {month: "Jul", units: 32}, {month: "Aug", units: 34}] },
+      { id: "8", name: "Nehal", phone: "919696979583", prevReading: 757, currReading: 956, consumed: 199, amountDue: 2590, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 175}, {month: "Jul", units: 188}, {month: "Aug", units: 199}] },
+      { id: "9", name: "Prahlad", phone: "919125631494", prevReading: 112, currReading: 120, consumed: 8, amountDue: 100, rate: 12.50, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 6}, {month: "Jul", units: 7}, {month: "Aug", units: 8}] },
+      { id: "10", name: "Shahid", phone: "917754017685", prevReading: 5337, currReading: 5413, consumed: 76, amountDue: 990, rate: 13.02, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 70}, {month: "Jul", units: 72}, {month: "Aug", units: 76}] },
+      { id: "11", name: "Umair", phone: "916390548353", prevReading: 2005, currReading: 2057, consumed: 52, amountDue: 680, rate: 13.07, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 45}, {month: "Jul", units: 48}, {month: "Aug", units: 52}] },
+      { id: "12", name: "Wamik", phone: "919839265798", prevReading: 7109, currReading: 7604, consumed: 495, amountDue: 6440, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 450}, {month: "Jul", units: 475}, {month: "Aug", units: 495}] },
+      { id: "13", name: "Zeeshan", phone: "919305062462", prevReading: 1498, currReading: 1556, consumed: 58, amountDue: 750, rate: 12.93, fine: 50, dueDate: "2026-08-15", status: "unpaid", generatedDate: "01/08/2026", paidDate: null, history: [{month: "Jun", units: 50}, {month: "Jul", units: 55}, {month: "Aug", units: 58}] }
     ];
 
     let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
@@ -317,7 +328,6 @@
     }
 
     function startNextCyclePrompt() {
-      
       const [currYear, currMonth] = currentCycle.split("-").map(Number);
       let nextMonth = currMonth + 1;
       let nextYear = currYear;
@@ -327,12 +337,11 @@
       }
       const nextCycleKey = `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
       const nextCycleName = formatCycleLabel(nextCycleKey);
-      
-        if (confirm(`Do you want to create a new billing cycle for "${nextCycleName}"?\n\n• Each tenant's current reading will become their previous reading.\n• Status will reset to Unpaid.`)) {
+
+      if (confirm(`Do you want to create a new billing cycle for "${nextCycleName}"?\n\n• Each tenant's current reading will become their previous reading.\n• Status will reset to Unpaid.\n• Generation date will be saved.`)) {
         const defaultDueDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-15`;
-// Add generatedDate when creating the cycle records:
-const generatedDate: new Date().toLocaleDateString('en-GB');
-  
+        const genDateFormatted = new Date().toLocaleDateString('en-GB');
+
         const newCycleTenants = tenants.map(t => {
           const carriedPrev = t.currReading;
           const carriedHistory = [...(t.history || [])];
@@ -350,6 +359,7 @@ const generatedDate: new Date().toLocaleDateString('en-GB');
             dueDate: defaultDueDate,
             status: "unpaid",
             generatedDate: genDateFormatted,
+            paidDate: null,
             history: carriedHistory
           };
         });
@@ -431,6 +441,8 @@ const generatedDate: new Date().toLocaleDateString('en-GB');
           fine: Number(document.getElementById("in-fine").value),
           dueDate: document.getElementById("in-date").value,
           status: "unpaid",
+          generatedDate: new Date().toLocaleDateString('en-GB'),
+          paidDate: null,
           history: [{ month: cycleShort, units: consumed }]
         };
         tenants.unshift(newRecord);
@@ -443,14 +455,16 @@ const generatedDate: new Date().toLocaleDateString('en-GB');
     }
 
     function togglePaid(id) {
-  const tenant = tenants.find(t => t.id === id);
-  if (tenant) {
-    tenant.status = tenant.status === 'paid' ? 'unpaid' : 'paid';
-    tenant.paidDate = tenant.status === 'paid' ? new Date().toLocaleDateString('en-GB') : null;
-    saveState();
-  }
-}
-
+      const tenant = tenants.find(t => t.id === id);
+      if (tenant) {
+        tenant.status = tenant.status === 'paid' ? 'unpaid' : 'paid';
+        tenant.paidDate = tenant.status === 'paid' ? new Date().toLocaleDateString('en-GB') : null;
+        saveState();
+        if (selectedTenantForShare && selectedTenantForShare.id === id) {
+          viewTenant(id);
+        }
+      }
+    }
 
     function deleteTenant(id, name) {
       if (confirm(`Delete bill record for "${name}" from ${formatCycleLabel(currentCycle)}?`)) {
@@ -553,7 +567,6 @@ const generatedDate: new Date().toLocaleDateString('en-GB');
       const totalPendingAmt = Math.max(0, totalBilledAmt - totalPaidAmt);
       const collectionPercent = totalBilledAmt > 0 ? Math.round((totalPaidAmt / totalBilledAmt) * 100) : 0;
 
-      // Update Top Stats
       document.getElementById('stat-total').innerText = `${tenants.length} Tenants`;
       document.getElementById('stat-billed-amt').innerText = `₹${totalBilledAmt.toLocaleString()}`;
       document.getElementById('stat-paid').innerText = `${paidCount} Paid`;
@@ -673,8 +686,13 @@ const generatedDate: new Date().toLocaleDateString('en-GB');
       const totalAmount = baseAmount + fineAmount;
       const cycleFormatted = formatCycleLabel(currentCycle);
 
+      const generatedDate = t.generatedDate || `01/${currentCycle.split('-')[1]}/${currentCycle.split('-')[0]}`;
+      const paidDate = t.paidDate || (t.status === 'paid' ? 'Paid on Record' : 'Not Paid Yet');
+
       document.getElementById("card-name").innerText = t.name;
       document.getElementById("card-cycle-label").innerText = cycleFormatted;
+      document.getElementById("card-gen-date").innerText = generatedDate;
+      document.getElementById("card-pay-date").innerText = paidDate;
       document.getElementById("card-prev").innerText = t.prevReading;
       document.getElementById("card-curr").innerText = t.currReading;
       document.getElementById("card-consumed").innerText = consumed;
@@ -686,13 +704,13 @@ const generatedDate: new Date().toLocaleDateString('en-GB');
       const badge = document.getElementById("card-badge");
       if (t.status === 'paid') {
         badge.innerText = "STATUS: PAID";
-        badge.className = "bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold";
+        badge.className = "bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
       } else if (isOverdue) {
         badge.innerText = "STATUS: OVERDUE";
-        badge.className = "bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold shadow-[0_0_10px_rgba(220,38,38,0.5)]";
+        badge.className = "bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black shadow-[0_0_10px_rgba(220,38,38,0.5)]";
       } else {
         badge.innerText = "STATUS: PENDING";
-        badge.className = "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white px-4 py-1.5 rounded-l-full text-xs font-bold";
+        badge.className = "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
       }
 
       const btnWhatsapp = document.getElementById("btn-whatsapp");
@@ -722,7 +740,7 @@ const generatedDate: new Date().toLocaleDateString('en-GB');
       const totalAmount = isOverdue ? t.amountDue + t.fine : t.amountDue;
       const cycleFormatted = formatCycleLabel(currentCycle);
 
-      const textMsg = `Hello ${t.name},\nYour Electricity Bill for ${cycleFormatted} is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}. Please pay promptly.`;
+      const textMsg = `Hello ${t.name},\nYour Electricity Bill for ${cycleFormatted} is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}.\nPayment Date: ${t.paidDate || 'Pending'}.\n\nPlease pay promptly.`;
 
       try {
         const canvas = await html2canvas(card, { backgroundColor: '#111111', scale: 2 });
