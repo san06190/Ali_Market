@@ -270,10 +270,7 @@
 ];
     let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
     let currentCycle = localStorage.getItem("powerbill_current_cycle") || "2026-08";
-localStorage.setItem("powerbill_data_2026-08", JSON.stringify(updatedAugustRecords));
-localStorage.setItem("powerbill_cycles", JSON.stringify(["2026-08"]));
-localStorage.setItem("powerbill_current_cycle", "2026-08");
-location.reload();
+
     if (!localStorage.getItem(`powerbill_data_2026-08`)) {
       localStorage.setItem(`powerbill_data_2026-08`, JSON.stringify(defaultAugustTenants));
     }
