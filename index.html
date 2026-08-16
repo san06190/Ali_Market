@@ -268,14 +268,12 @@
   { id: "12", name: "Wamik", phone: "919839265798", prevReading: 7109, currReading: 7604, consumed: 495, amountDue: 6440, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 450}, {month: "Jul", units: 475}, {month: "Aug", units: 495}] },
   { id: "13", name: "Zeeshan", phone: "919305062462", prevReading: 1498, currReading: 1556, consumed: 58, amountDue: 750, rate: 12.93, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 50}, {month: "Jul", units: 55}, {month: "Aug", units: 58}] }
 ];
-
+    let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
+    let currentCycle = localStorage.getItem("powerbill_current_cycle") || "2026-08";
 localStorage.setItem("powerbill_data_2026-08", JSON.stringify(updatedAugustRecords));
 localStorage.setItem("powerbill_cycles", JSON.stringify(["2026-08"]));
 localStorage.setItem("powerbill_current_cycle", "2026-08");
 location.reload();
-    let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
-    let currentCycle = localStorage.getItem("powerbill_current_cycle") || "2026-08";
-
     if (!localStorage.getItem(`powerbill_data_2026-08`)) {
       localStorage.setItem(`powerbill_data_2026-08`, JSON.stringify(defaultAugustTenants));
     }
