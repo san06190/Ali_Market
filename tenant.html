@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tenant Bill Portal - Ali Market</title>
-  <link rel="icon" type="image/png" href="icon.png" />
+  <link rel="icon" type="image/png" href="1000167585.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -61,7 +61,7 @@
               <span id="card-gen-date" class="text-gray-200 font-mono font-bold">10/08/2026</span>
             </div>
             <div>
-              <span class="text-gray-500 block text-[10px] uppercase font-bold">Payment Status Date</span>
+              <span class="text-gray-500 block text-[10px] uppercase font-bold">Payment Date</span>
               <span id="card-pay-date" class="text-emerald-400 font-mono font-bold">Not Paid Yet</span>
             </div>
           </div>
@@ -140,6 +140,18 @@
       return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     }
 
+    function checkIsOverdue(t) {
+      const today = new Date().toISOString().split('T')[0];
+      if (t.status === 'paid' && t.paidDate) {
+        const parts = t.paidDate.split('/');
+        if (parts.length === 3) {
+          const [dd, mm, yyyy] = parts;
+          return `${yyyy}-${mm}-${dd}` > t.dueDate;
+        }
+      }
+      return t.dueDate < today && t.status === 'unpaid';
+    }
+
     function initCycles() {
       const select = document.getElementById("cycle-select");
       select.innerHTML = "";
@@ -204,17 +216,15 @@
       currentSelectedTenant = t;
 
       const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
-      const today = new Date().toISOString().split('T')[0];
-      const isOverdue = t.dueDate < today && t.status === 'unpaid';
+      const isOverdue = checkIsOverdue(t);
       const baseAmount = t.amountDue;
       const fineAmount = isOverdue ? (t.fine || 50) : 0;
       const totalAmount = baseAmount + fineAmount;
       const cycleFormatted = formatCycleLabel(selectedCycle);
 
-      // Default bill generation date to the 10th of that cycle
       const [cYear, cMonth] = selectedCycle.split("-");
       const generatedDate = t.generatedDate || `10/${cMonth}/${cYear}`;
-      const paidDate = t.paidDate || (t.status === 'paid' ? 'Paid on Record' : 'Not Paid Yet');
+      const paidDate = t.paidDate ? t.paidDate : (t.status === 'paid' ? 'Paid' : 'Not Paid Yet');
 
       document.getElementById("card-name").innerText = t.name;
       document.getElementById("card-cycle-label").innerText = cycleFormatted;
@@ -253,9 +263,10 @@
 
         if (record) {
           const consumed = record.consumed !== undefined ? record.consumed : (record.currReading - record.prevReading);
-          const isOverdue = record.dueDate < new Date().toISOString().split('T')[0] && record.status === 'unpaid';
-          const total = isOverdue ? record.amountDue + (record.fine || 50) : record.amountDue;
-          const paidOn = record.paidDate || (record.status === 'paid' ? 'Paid' : '—');
+          const isOverdue = checkIsOverdue(record);
+          const fineAmount = isOverdue ? (record.fine || 50) : 0;
+          const total = record.amountDue + fineAmount;
+          const paidOn = record.paidDate ? record.paidDate : (record.status === 'paid' ? 'Paid' : '—');
 
           const tr = document.createElement("tr");
           tr.className = "hover:bg-gray-950/50";
