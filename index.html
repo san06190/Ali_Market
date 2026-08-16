@@ -454,18 +454,29 @@ function saveState() {
       document.getElementById("edit-id").value = "";
       toggleModal(false);
     }
-
-    function togglePaid(id) {
-      const tenant = tenants.find(t => t.id === id);
-      if (tenant) {
-        tenant.status = tenant.status === 'paid' ? 'unpaid' : 'paid';
-        tenant.paidDate = tenant.status === 'paid' ? new Date().toLocaleDateString('en-GB') : null;
-        saveState();
-        if (selectedTenantForShare && selectedTenantForShare.id === id) {
-          viewTenant(id);
-        }
-      }
+function togglePaid(id) {
+  const tenant = tenants.find(t => t.id === id);
+  if (tenant) {
+    tenant.status = tenant.status === 'paid' ? 'unpaid' : 'paid';
+    
+    // Save exact date when marked paid, or null if marked unpaid
+    if (tenant.status === 'paid') {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      tenant.paidDate = `${dd}/${mm}/${yyyy}`;
+    } else {
+      tenant.paidDate = null;
     }
+
+    saveState();
+    if (selectedTenantForShare && selectedTenantForShare.id === id) {
+      viewTenant(id);
+    }
+  }
+}
+
 
     function deleteTenant(id, name) {
       if (confirm(`Delete bill record for "${name}" from ${formatCycleLabel(currentCycle)}?`)) {
