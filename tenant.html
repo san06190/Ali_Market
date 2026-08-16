@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tenant Bill Portal - Ali Market</title>
+  <link rel="icon" type="image/png" href="1000167585.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen pb-16 font-sans">
+
+  <!-- Read-Only Header -->
+  <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-lg">
+    <div class="max-w-md mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <img src="1000167585.png" alt="Logo" class="w-7 h-7 rounded-md object-cover border border-gray-700" onerror="this.style.display='none'">
+        <div>
+          <h1 class="text-base font-black text-white tracking-wide">Ali Market Portal</h1>
+          <p class="text-[10px] text-gray-400">Tenant Electricity Receipt</p>
+        </div>
+      </div>
+      <!-- Month Cycle Selector for Tenant -->
+      <select id="cycle-select" onchange="renderTenantData(this.value)" class="bg-gray-950 border border-gray-700 text-yellow-400 font-bold text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-yellow-500">
+        <!-- Filled dynamically -->
+      </select>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-6">
+
+    <!-- Tenant Search/Selector (Shown only if no valid parameter is passed in URL) -->
+    <div id="selector-box" class="hidden bg-gray-900 border border-gray-800 p-4 rounded-xl space-y-2">
+      <label class="text-xs text-gray-400 block font-bold">Select Your Shop / Name:</label>
+      <select id="tenant-select" onchange="loadTenantByName(this.value)" class="w-full bg-gray-950 border border-gray-700 text-white text-sm rounded-lg p-2.5">
+        <!-- Filled dynamically -->
+      </select>
+    </div>
+
+    <!-- Dark-Themed Bill Card for Viewing & Export -->
+    <div class="flex justify-center">
+      <div id="bill-card" class="w-full bg-[#111111] text-gray-200 overflow-hidden relative font-sans shadow-2xl pb-6 border border-gray-800 rounded-2xl">
+        
+        <!-- Card Header & Badges -->
+        <div class="flex justify-between items-start pt-6 pb-4 pl-6 pr-0">
+          <div>
+            <h1 class="text-2xl font-black text-white tracking-tight" id="card-name">--</h1>
+            <p class="text-xs font-semibold text-yellow-400 mt-0.5" id="card-cycle-label">--</p>
+          </div>
+          <div id="card-badge" class="bg-red-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black tracking-widest uppercase">
+            STATUS: PENDING
+          </div>
+        </div>
+
+        <div class="px-6 space-y-4">
+          
+          <!-- Key Dates Block -->
+          <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <span class="text-gray-500 block text-[10px] uppercase font-bold">Bill Generated</span>
+              <span id="card-gen-date" class="text-gray-200 font-mono font-bold">--</span>
+            </div>
+            <div>
+              <span class="text-gray-500 block text-[10px] uppercase font-bold">Payment Status Date</span>
+              <span id="card-pay-date" class="text-emerald-400 font-mono font-bold">Not Paid Yet</span>
+            </div>
+          </div>
+
+          <!-- Account Summary -->
+          <div>
+            <h2 class="text-[11px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Meter Reading</h2>
+            <hr class="border-gray-800 mb-2">
+            <div class="space-y-1.5 text-xs sm:text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">Previous Reading:</span><span id="card-prev" class="text-gray-200 font-mono">0</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Current Reading:</span><span id="card-curr" class="text-gray-200 font-mono">0</span></div>
+              <div class="flex justify-between font-bold"><span class="text-gray-300">Units Consumed:</span><span id="card-consumed" class="text-white font-mono">0</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Due Date:</span><span id="card-due" class="text-red-400 font-mono font-bold">--</span></div>
+            </div>
+          </div>
+
+          <!-- Payment Breakdown -->
+          <div>
+            <h2 class="text-[11px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Payment Breakdown</h2>
+            <hr class="border-gray-800 mb-2">
+            <div class="space-y-1 text-xs sm:text-sm mb-3">
+              <div class="flex justify-between"><span class="text-gray-400">Base Energy Amount:</span><span id="card-orig" class="text-gray-200 font-mono">₹0</span></div>
+              <div class="flex justify-between"><span class="text-red-400">Late Fine (if unpaid past due):</span><span class="text-red-400 font-mono" id="card-fine">₹0</span></div>
+            </div>
+            <div class="bg-gradient-to-r from-red-950/60 via-red-900/40 to-red-950/60 border border-red-500/30 rounded-xl p-3 flex justify-between items-center shadow-lg">
+               <span class="text-red-300 font-bold uppercase text-xs">Total Amount Due:</span> 
+               <span class="text-red-400 font-black text-2xl font-mono" id="card-total">₹0</span>
+            </div>
+          </div>
+
+          <!-- Notice -->
+          <p class="text-gray-500 text-[11px] leading-relaxed italic text-center pt-1">
+            Note: ₹50 late fine applies if payment is settled after the due date.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download Bill Image -->
+    <div class="text-center">
+      <button onclick="downloadCard()" class="w-full bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2">
+        📥 Save Bill Receipt (Image)
+      </button>
+    </div>
+
+    <!-- Previous Months History Table -->
+    <section class="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
+      <h3 class="text-xs font-bold text-white uppercase tracking-wider">📜 Your Payment & Usage History</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-gray-300">
+          <thead class="bg-gray-950 text-gray-400 uppercase font-bold border-b border-gray-800">
+            <tr>
+              <th class="p-2">Cycle</th>
+              <th class="p-2">Units</th>
+              <th class="p-2">Amount</th>
+              <th class="p-2">Status</th>
+              <th class="p-2">Paid On</th>
+            </tr>
+          </thead>
+          <tbody id="history-rows" class="divide-y divide-gray-800">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
+    let currentSelectedTenant = null;
+
+    function formatCycleLabel(cycleKey) {
+      const [year, month] = cycleKey.split("-");
+      const date = new Date(year, parseInt(month) - 1, 1);
+      return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    }
+
+    // Populate cycle dropdown
+    function initCycles() {
+      const select = document.getElementById("cycle-select");
+      select.innerHTML = "";
+      allCycles.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.innerText = formatCycleLabel(c);
+        select.appendChild(opt);
+      });
+    }
+
+    function getTargetTenant() {
+      const params = new URLSearchParams(window.location.search);
+      const nameParam = params.get("tenant") || params.get("name");
+      const phoneParam = params.get("phone");
+
+      // Read from active cycle
+      const activeCycle = document.getElementById("cycle-select").value || allCycles[0];
+      const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${activeCycle}`)) || [];
+
+      if (nameParam) {
+        return cycleData.find(t => t.name.toLowerCase() === nameParam.toLowerCase()) || cycleData[0];
+      }
+      if (phoneParam) {
+        const cleanTarget = phoneParam.replace(/\D/g, '');
+        return cycleData.find(t => t.phone && t.phone.replace(/\D/g, '').includes(cleanTarget)) || cycleData[0];
+      }
+      return cycleData[0];
+    }
+
+    function initTenantList() {
+      const activeCycle = document.getElementById("cycle-select").value || allCycles[0];
+      const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${activeCycle}`)) || [];
+      const tenantSelect = document.getElementById("tenant-select");
+      tenantSelect.innerHTML = "";
+
+      cycleData.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.name;
+        opt.innerText = t.name;
+        tenantSelect.appendChild(opt);
+      });
+
+      const params = new URLSearchParams(window.location.search);
+      if (!params.get("tenant") && !params.get("phone")) {
+        document.getElementById("selector-box").classList.remove("hidden");
+      }
+    }
+
+    function loadTenantByName(name) {
+      const activeCycle = document.getElementById("cycle-select").value;
+      const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${activeCycle}`)) || [];
+      currentSelectedTenant = cycleData.find(t => t.name.toLowerCase() === name.toLowerCase());
+      renderTenantData(activeCycle);
+    }
+
+    function renderTenantData(selectedCycle) {
+      const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${selectedCycle}`)) || [];
+      const tenantName = currentSelectedTenant ? currentSelectedTenant.name : (getTargetTenant() ? getTargetTenant().name : "");
+      const t = cycleData.find(item => item.name.toLowerCase() === tenantName.toLowerCase());
+
+      if (!t) return;
+      currentSelectedTenant = t;
+
+      const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
+      const today = new Date().toISOString().split('T')[0];
+      const isOverdue = t.dueDate < today && t.status === 'unpaid';
+      const baseAmount = t.amountDue;
+      const fineAmount = isOverdue ? (t.fine || 50) : 0;
+      const totalAmount = baseAmount + fineAmount;
+      const cycleFormatted = formatCycleLabel(selectedCycle);
+
+      // Default bill generation date to the 1st of that billing month if not explicitly stored
+      const generatedDate = t.generatedDate || `${selectedCycle}-01`;
+      const paidDate = t.paidDate || (t.status === 'paid' ? 'Paid on record' : 'Not Paid Yet');
+
+      document.getElementById("card-name").innerText = t.name;
+      document.getElementById("card-cycle-label").innerText = cycleFormatted;
+      document.getElementById("card-gen-date").innerText = generatedDate;
+      document.getElementById("card-pay-date").innerText = paidDate;
+      document.getElementById("card-prev").innerText = t.prevReading;
+      document.getElementById("card-curr").innerText = t.currReading;
+      document.getElementById("card-consumed").innerText = consumed;
+      document.getElementById("card-due").innerText = t.dueDate;
+      document.getElementById("card-orig").innerText = `₹${baseAmount.toLocaleString()}`;
+      document.getElementById("card-fine").innerText = `₹${fineAmount}`;
+      document.getElementById("card-total").innerText = `₹${totalAmount.toLocaleString()}`;
+
+      const badge = document.getElementById("card-badge");
+      if (t.status === 'paid') {
+        badge.innerText = "STATUS: PAID";
+        badge.className = "bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
+      } else if (isOverdue) {
+        badge.innerText = "STATUS: OVERDUE";
+        badge.className = "bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
+      } else {
+        badge.innerText = "STATUS: PENDING";
+        badge.className = "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
+      }
+
+      renderHistoricalTable(t.name);
+    }
+
+    function renderHistoricalTable(tenantName) {
+      const historyBody = document.getElementById("history-rows");
+      historyBody.innerHTML = "";
+
+      allCycles.forEach(cycleKey => {
+        const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${cycleKey}`)) || [];
+        const record = cycleData.find(item => item.name.toLowerCase() === tenantName.toLowerCase());
+
+        if (record) {
+          const consumed = record.consumed !== undefined ? record.consumed : (record.currReading - record.prevReading);
+          const isOverdue = record.dueDate < new Date().toISOString().split('T')[0] && record.status === 'unpaid';
+          const total = isOverdue ? record.amountDue + (record.fine || 50) : record.amountDue;
+          const paidOn = record.paidDate || (record.status === 'paid' ? 'Paid' : '—');
+
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-gray-950/50";
+          tr.innerHTML = `
+            <td class="p-2 font-medium text-white">${formatCycleLabel(cycleKey)}</td>
+            <td class="p-2 font-mono">${consumed}</td>
+            <td class="p-2 font-mono font-bold">₹${total.toLocaleString()}</td>
+            <td class="p-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+                record.status === 'paid' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'
+              }">${record.status.toUpperCase()}</span>
+            </td>
+            <td class="p-2 font-mono text-gray-400">${paidOn}</td>
+          `;
+          historyBody.appendChild(tr);
+        }
+      });
+    }
+
+    function downloadCard() {
+      const card = document.getElementById("bill-card");
+      html2canvas(card, { backgroundColor: '#111111', scale: 2 }).then(canvas => {
+        const link = document.createElement("a");
+        const name = document.getElementById("card-name").innerText.replace(/[^a-z0-9]/gi, '_');
+        const cycle = document.getElementById("cycle-select").value;
+        link.download = `${name}_${cycle}_Bill.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
+
+    // Startup
+    initCycles();
+    initTenantList();
+    currentSelectedTenant = getTargetTenant();
+    if (allCycles.length > 0) {
+      document.getElementById("cycle-select").value = allCycles[allCycles.length - 1];
+      renderTenantData(document.getElementById("cycle-select").value);
+    }
+  </script>
+</body>
+</html>
