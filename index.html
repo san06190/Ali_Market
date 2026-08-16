@@ -443,7 +443,8 @@ function saveState() {
           dueDate: document.getElementById("in-date").value,
           status: "unpaid",
           generatedDate: `10/${cMonth}/${cYear}`,
-          paidDate: null,
+          paidDate = t.paidDate ? t.paidDate : (t.status === 'paid' ? new Date().toLocaleDateString('en-GB') : 'Not Paid Yet');
+        
           history: [{ month: cycleShort, units: consumed }]
         };
         tenants.unshift(newRecord);
