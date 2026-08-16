@@ -4,14 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tenant Electricity Manager</title>
-  
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="1000167585.png" />
-
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- html2canvas for card saving -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen pb-20 font-sans">
@@ -20,11 +15,10 @@
   <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-lg">
     <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between sm:items-center gap-3">
       <div>
-        <h1 class="text-xl font-black text-white tracking-wide">⚡Ali Market E-Bill</h1>
+        <h1 class="text-xl font-black text-white tracking-wide">⚡ PowerBill Pro</h1>
         <div class="flex items-center gap-2 mt-1">
           <label class="text-xs text-gray-400">Billing Cycle:</label>
           <select id="cycle-select" onchange="switchCycle(this.value)" class="bg-gray-950 border border-gray-700 text-red-400 font-bold text-xs rounded-lg px-2 py-1 focus:ring-1 focus:ring-red-500">
-            <!-- Populated dynamically -->
           </select>
         </div>
       </div>
@@ -41,7 +35,7 @@
 
   <main class="max-w-4xl mx-auto p-4 space-y-6">
 
-    <!-- Overall Collection & Stats Summary -->
+    <!-- Stats Summary -->
     <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <div class="bg-gray-900 border border-gray-800 p-3 sm:p-4 rounded-xl text-center">
         <p class="text-[10px] sm:text-xs text-gray-400 font-bold uppercase">Total Billed</p>
@@ -65,7 +59,7 @@
       </div>
     </section>
 
-    <!-- Month-Wise Historical Summary Card -->
+    <!-- Month Summary Table -->
     <section class="bg-gray-900 border border-gray-800 rounded-2xl p-4 sm:p-5 space-y-3">
       <div class="flex justify-between items-center">
         <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -87,7 +81,6 @@
             </tr>
           </thead>
           <tbody id="collection-history-body" class="divide-y divide-gray-800">
-            <!-- Populated dynamically -->
           </tbody>
         </table>
       </div>
@@ -102,26 +95,22 @@
 
     <!-- Tenant List -->
     <section id="tenant-list" class="space-y-3">
-      <!-- Dynamic list -->
     </section>
 
-    <!-- Detail View & Dark Bill Card Preview -->
+    <!-- Bill Detail & Image Card -->
     <section id="detail-section" class="hidden bg-gray-900 border border-gray-800 rounded-2xl p-4 sm:p-6 space-y-6">
       <div class="flex justify-between items-center">
         <h2 class="text-lg font-bold text-white">Bill Summary & Graph</h2>
         <button onclick="closeDetails()" class="text-gray-400 text-sm hover:text-white bg-gray-800 px-3 py-1 rounded-lg">✕ Close</button>
       </div>
 
-      <!-- Graph -->
       <div class="bg-gray-950 p-4 rounded-xl border border-gray-800">
         <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Consumption Trend (Units)</h3>
         <canvas id="usageChart" height="120"></canvas>
       </div>
 
-      <!-- Dark-Themed Bill Card for Image Export -->
       <div class="flex justify-center">
         <div id="bill-card" class="w-full max-w-sm bg-[#111111] text-gray-200 overflow-hidden relative font-sans shadow-2xl pb-6 border border-gray-800 rounded-2xl">
-          
           <div class="flex justify-between items-start pt-6 pb-4 pl-6 pr-0">
             <div>
               <h1 class="text-2xl font-black text-white tracking-tight" id="card-name">--</h1>
@@ -133,8 +122,6 @@
           </div>
 
           <div class="px-6 space-y-4">
-            
-            <!-- Generation and Payment Dates -->
             <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
               <div>
                 <span class="text-gray-500 block text-[10px] uppercase font-bold">Bill Generated</span>
@@ -153,10 +140,7 @@
                 <div class="flex justify-between"><span class="text-gray-400">Previous Reading:</span><span id="card-prev" class="text-gray-200 font-mono">0</span></div>
                 <div class="flex justify-between"><span class="text-gray-400">Current Reading:</span><span id="card-curr" class="text-gray-200 font-mono">0</span></div>
                 <div class="flex justify-between font-bold"><span class="text-gray-300">Units Consumed:</span><span id="card-consumed" class="text-white font-mono">0</span></div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-400">Due Date:</span>
-                  <span class="text-red-400 font-mono font-bold" id="card-due">15/08/2026</span>
-                </div>
+                <div class="flex justify-between items-center"><span class="text-gray-400">Due Date:</span><span class="text-red-400 font-mono font-bold" id="card-due">15/08/2026</span></div>
               </div>
             </div>
 
@@ -182,7 +166,6 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
       <div class="flex flex-wrap gap-2 justify-center max-w-sm mx-auto">
         <button onclick="downloadBillCard()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm border border-gray-700">
           📥 Save Image
@@ -195,32 +178,30 @@
         </a>
       </div>
     </section>
-
   </main>
 
-  <!-- Add / Edit Reading Modal -->
+  <!-- Edit/Add Modal -->
   <div id="modal-new" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
       <h2 id="modal-title" class="text-lg font-bold text-white">Add Tenant Bill</h2>
-      
       <form id="bill-form" onsubmit="handleFormSubmit(event)" class="space-y-3 text-sm">
         <input type="hidden" id="edit-id">
         <div>
           <label class="text-gray-400 block mb-1">Tenant Name</label>
-          <input required id="in-name" type="text" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="e.g. Danish">
+          <input required id="in-name" type="text" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
         </div>
         <div>
-          <label class="text-gray-400 block mb-1">Phone Number (with Country Code)</label>
-          <input id="in-phone" type="tel" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="919161835537">
+          <label class="text-gray-400 block mb-1">Phone Number</label>
+          <input id="in-phone" type="tel" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="text-gray-400 block mb-1">Prev Reading</label>
-            <input required id="in-prev" type="number" oninput="autoCalculateAmount()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="720">
+            <input required id="in-prev" type="number" oninput="autoCalculateAmount()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
           </div>
           <div>
             <label class="text-gray-400 block mb-1">Curr Reading</label>
-            <input required id="in-curr" type="number" oninput="autoCalculateAmount()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="811">
+            <input required id="in-curr" type="number" oninput="autoCalculateAmount()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
@@ -229,8 +210,8 @@
             <input required id="in-rate" type="number" step="any" value="13" oninput="autoCalculateAmount()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
           </div>
           <div>
-            <label class="text-gray-400 block mb-1">Calculated Amount (₹)</label>
-            <input required id="in-amount" type="number" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="1180">
+            <label class="text-gray-400 block mb-1">Calculated (₹)</label>
+            <input required id="in-amount" type="number" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
@@ -243,7 +224,19 @@
             <input required id="in-date" type="date" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
           </div>
         </div>
-
+        <div class="grid grid-cols-2 gap-2 bg-gray-950 p-2.5 rounded-lg border border-gray-800">
+          <div>
+            <label class="text-gray-400 block mb-1">Payment Status</label>
+            <select id="in-status" onchange="togglePaidDateInput(this.value)" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-white font-bold">
+              <option value="unpaid">Unpaid</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-gray-400 block mb-1">Payment Date</label>
+            <input id="in-paid-date" type="date" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-white">
+          </div>
+        </div>
         <div class="flex gap-2 pt-2">
           <button type="button" onclick="toggleModal(false)" class="w-1/2 bg-gray-800 py-2.5 rounded-lg text-white font-bold">Cancel</button>
           <button type="submit" class="w-1/2 bg-red-600 hover:bg-red-700 py-2.5 rounded-lg text-white font-bold">Save Record</button>
@@ -251,23 +244,23 @@
       </form>
     </div>
   </div>
-
-  <script>
+    <script>
     const defaultAugustTenants = [
-  { id: "1", name: "Abu Bakar", phone: "919198002777", prevReading: 523, currReading: 556, consumed: 33, amountDue: 430, rate: 13.03, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026", history: [{month: "Jun", units: 28}, {month: "Jul", units: 30}, {month: "Aug", units: 33}] },
-  { id: "2", name: "Akram", phone: "919628285790", prevReading: 915, currReading: 975, consumed: 60, amountDue: 780, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 54}, {month: "Jul", units: 58}, {month: "Aug", units: 60}] },
-  { id: "3", name: "Amit", phone: "919838166073", prevReading: 467, currReading: 516, consumed: 49, amountDue: 640, rate: 13.06, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 40}, {month: "Jul", units: 44}, {month: "Aug", units: 49}] },
-  { id: "4", name: "Ashfaque", phone: "919936016464", prevReading: 724, currReading: 754, consumed: 30, amountDue: 390, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "15/08/2026", history: [{month: "Jun", units: 25}, {month: "Jul", units: 28}, {month: "Aug", units: 30}] },
-  { id: "5", name: "Danish", phone: "919161835537", prevReading: 720, currReading: 811, consumed: 91, amountDue: 1180, rate: 12.96, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 80}, {month: "Jul", units: 85}, {month: "Aug", units: 91}] },
-  { id: "6", name: "Gopal", phone: "919936334701", prevReading: 571, currReading: 596, consumed: 25, amountDue: 330, rate: 13.20, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 20}, {month: "Jul", units: 22}, {month: "Aug", units: 25}] },
-  { id: "7", name: "Jane Alam (Hafiz Ji)", phone: "919838592132", prevReading: 871, currReading: 905, consumed: 34, amountDue: 440, rate: 12.94, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 30}, {month: "Jul", units: 32}, {month: "Aug", units: 34}] },
-  { id: "8", name: "Nehal", phone: "919696979583", prevReading: 757, currReading: 956, consumed: 199, amountDue: 2590, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026", history: [{month: "Jun", units: 175}, {month: "Jul", units: 188}, {month: "Aug", units: 199}] },
-  { id: "9", name: "Prahlad", phone: "919125631494", prevReading: 112, currReading: 120, consumed: 8, amountDue: 100, rate: 12.50, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "11/08/2026", history: [{month: "Jun", units: 6}, {month: "Jul", units: 7}, {month: "Aug", units: 8}] },
-  { id: "10", name: "Shahid", phone: "917754017685", prevReading: 5337, currReading: 5413, consumed: 76, amountDue: 990, rate: 13.02, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 70}, {month: "Jul", units: 72}, {month: "Aug", units: 76}] },
-  { id: "11", name: "Umair", phone: "916390548353", prevReading: 2005, currReading: 2057, consumed: 52, amountDue: 680, rate: 13.07, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "15/08/2026", history: [{month: "Jun", units: 45}, {month: "Jul", units: 48}, {month: "Aug", units: 52}] },
-  { id: "12", name: "Wamik", phone: "919839265798", prevReading: 7109, currReading: 7604, consumed: 495, amountDue: 6440, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 450}, {month: "Jul", units: 475}, {month: "Aug", units: 495}] },
-  { id: "13", name: "Zeeshan", phone: "919305062462", prevReading: 1498, currReading: 1556, consumed: 58, amountDue: 750, rate: 12.93, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 50}, {month: "Jul", units: 55}, {month: "Aug", units: 58}] }
-];
+      { id: "1", name: "Abu Bakar", phone: "919198002777", prevReading: 523, currReading: 556, consumed: 33, amountDue: 430, rate: 13.03, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026", history: [{month: "Jun", units: 28}, {month: "Jul", units: 30}, {month: "Aug", units: 33}] },
+      { id: "2", name: "Akram", phone: "919628285790", prevReading: 915, currReading: 975, consumed: 60, amountDue: 780, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 54}, {month: "Jul", units: 58}, {month: "Aug", units: 60}] },
+      { id: "3", name: "Amit", phone: "919838166073", prevReading: 467, currReading: 516, consumed: 49, amountDue: 640, rate: 13.06, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 40}, {month: "Jul", units: 44}, {month: "Aug", units: 49}] },
+      { id: "4", name: "Ashfaque", phone: "919936016464", prevReading: 724, currReading: 754, consumed: 30, amountDue: 390, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "15/08/2026", history: [{month: "Jun", units: 25}, {month: "Jul", units: 28}, {month: "Aug", units: 30}] },
+      { id: "5", name: "Danish", phone: "919161835537", prevReading: 720, currReading: 811, consumed: 91, amountDue: 1180, rate: 12.96, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 80}, {month: "Jul", units: 85}, {month: "Aug", units: 91}] },
+      { id: "6", name: "Gopal", phone: "919936334701", prevReading: 571, currReading: 596, consumed: 25, amountDue: 330, rate: 13.20, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 20}, {month: "Jul", units: 22}, {month: "Aug", units: 25}] },
+      { id: "7", name: "Jane Alam (Hafiz Ji)", phone: "919838592132", prevReading: 871, currReading: 905, consumed: 34, amountDue: 440, rate: 12.94, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 30}, {month: "Jul", units: 32}, {month: "Aug", units: 34}] },
+      { id: "8", name: "Nehal", phone: "919696979583", prevReading: 757, currReading: 956, consumed: 199, amountDue: 2590, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026", history: [{month: "Jun", units: 175}, {month: "Jul", units: 188}, {month: "Aug", units: 199}] },
+      { id: "9", name: "Prahlad", phone: "919125631494", prevReading: 112, currReading: 120, consumed: 8, amountDue: 100, rate: 12.50, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "11/08/2026", history: [{month: "Jun", units: 6}, {month: "Jul", units: 7}, {month: "Aug", units: 8}] },
+      { id: "10", name: "Shahid", phone: "917754017685", prevReading: 5337, currReading: 5413, consumed: 76, amountDue: 990, rate: 13.02, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 70}, {month: "Jul", units: 72}, {month: "Aug", units: 76}] },
+      { id: "11", name: "Umair", phone: "916390548353", prevReading: 2005, currReading: 2057, consumed: 52, amountDue: 680, rate: 13.07, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "15/08/2026", history: [{month: "Jun", units: 45}, {month: "Jul", units: 48}, {month: "Aug", units: 52}] },
+      { id: "12", name: "Wamik", phone: "919839265798", prevReading: 7109, currReading: 7604, consumed: 495, amountDue: 6440, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 450}, {month: "Jul", units: 475}, {month: "Aug", units: 495}] },
+      { id: "13", name: "Zeeshan", phone: "919305062462", prevReading: 1498, currReading: 1556, consumed: 58, amountDue: 750, rate: 12.93, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 50}, {month: "Jul", units: 55}, {month: "Aug", units: 58}] }
+    ];
+
     let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
     let currentCycle = localStorage.getItem("powerbill_current_cycle") || "2026-08";
 
@@ -286,21 +279,25 @@
       return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     }
 
-    // Accurate Overdue & Late Fine calculation
-    // Applies fine if still unpaid past dueDate OR if marked paid on a date after dueDate
     function checkIsOverdue(t) {
       const today = new Date().toISOString().split('T')[0];
-      
       if (t.status === 'paid' && t.paidDate) {
         const parts = t.paidDate.split('/');
         if (parts.length === 3) {
           const [dd, mm, yyyy] = parts;
-          const paidIso = `${yyyy}-${mm}-${dd}`;
-          return paidIso > t.dueDate;
+          return `${yyyy}-${mm}-${dd}` > t.dueDate;
         }
       }
-      
       return t.dueDate < today && t.status === 'unpaid';
+    }
+
+    function togglePaidDateInput(status) {
+      const paidDateInput = document.getElementById("in-paid-date");
+      if (status === 'paid' && !paidDateInput.value) {
+        paidDateInput.value = new Date().toISOString().split('T')[0];
+      } else if (status === 'unpaid') {
+        paidDateInput.value = '';
+      }
     }
 
     function initCycleSelector() {
@@ -354,31 +351,26 @@
       const nextCycleKey = `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
       const nextCycleName = formatCycleLabel(nextCycleKey);
 
-      if (confirm(`Do you want to create a new billing cycle for "${nextCycleName}"?\n\n• Each tenant's current reading will become their previous reading.\n• Status will reset to Unpaid.\n• Bill Generation Date: 10th of the month.`)) {
+      if (confirm(`Do you want to create a new billing cycle for "${nextCycleName}"?`)) {
         const defaultDueDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-15`;
         const genDateFormatted = `10/${String(nextMonth).padStart(2, '0')}/${nextYear}`;
 
-        const newCycleTenants = tenants.map(t => {
-          const carriedPrev = t.currReading;
-          const carriedHistory = [...(t.history || [])];
-          
-          return {
-            id: Date.now() + "_" + Math.random().toString(36).substr(2, 5),
-            name: t.name,
-            phone: t.phone,
-            prevReading: carriedPrev,
-            currReading: carriedPrev,
-            consumed: 0,
-            rate: t.rate || 13,
-            amountDue: 0,
-            fine: t.fine || 50,
-            dueDate: defaultDueDate,
-            status: "unpaid",
-            generatedDate: genDateFormatted,
-            paidDate: null,
-            history: carriedHistory
-          };
-        });
+        const newCycleTenants = tenants.map(t => ({
+          id: Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+          name: t.name,
+          phone: t.phone,
+          prevReading: t.currReading,
+          currReading: t.currReading,
+          consumed: 0,
+          rate: t.rate || 13,
+          amountDue: 0,
+          fine: t.fine || 50,
+          dueDate: defaultDueDate,
+          status: "unpaid",
+          generatedDate: genDateFormatted,
+          paidDate: null,
+          history: [...(t.history || [])]
+        }));
 
         currentCycle = nextCycleKey;
         if (!allCycles.includes(nextCycleKey)) {
@@ -399,7 +391,7 @@
       const t = tenants.find(item => item.id === id);
       if (!t) return;
 
-      document.getElementById("modal-title").innerText = `Update Reading: ${t.name}`;
+      document.getElementById("modal-title").innerText = `Update: ${t.name}`;
       document.getElementById("edit-id").value = t.id;
       document.getElementById("in-name").value = t.name;
       document.getElementById("in-phone").value = t.phone || "";
@@ -409,6 +401,16 @@
       document.getElementById("in-amount").value = t.amountDue || 0;
       document.getElementById("in-fine").value = t.fine || 50;
       document.getElementById("in-date").value = t.dueDate;
+      document.getElementById("in-status").value = t.status || 'unpaid';
+
+      if (t.paidDate) {
+        const parts = t.paidDate.split('/');
+        if (parts.length === 3) {
+          document.getElementById("in-paid-date").value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      } else {
+        document.getElementById("in-paid-date").value = '';
+      }
 
       toggleModal(true);
     }
@@ -421,6 +423,19 @@
       const consumed = Math.max(0, curr - prev);
       const rawPhone = document.getElementById("in-phone").value.replace(/\D/g, '');
       const cycleShort = new Date(currentCycle + "-01").toLocaleDateString("en-US", { month: "short" });
+
+      const statusVal = document.getElementById("in-status").value;
+      const rawPaidDate = document.getElementById("in-paid-date").value;
+      let formattedPaidDate = null;
+      if (statusVal === 'paid') {
+        if (rawPaidDate) {
+          const [yyyy, mm, dd] = rawPaidDate.split('-');
+          formattedPaidDate = `${dd}/${mm}/${yyyy}`;
+        } else {
+          const now = new Date();
+          formattedPaidDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        }
+      }
 
       if (editId) {
         const tenantIndex = tenants.findIndex(t => t.id === editId);
@@ -435,6 +450,8 @@
           t.amountDue = Number(document.getElementById("in-amount").value);
           t.fine = Number(document.getElementById("in-fine").value);
           t.dueDate = document.getElementById("in-date").value;
+          t.status = statusVal;
+          t.paidDate = formattedPaidDate;
           
           if (!t.history) t.history = [];
           const histIdx = t.history.findIndex(h => h.month === cycleShort);
@@ -457,9 +474,9 @@
           amountDue: Number(document.getElementById("in-amount").value),
           fine: Number(document.getElementById("in-fine").value),
           dueDate: document.getElementById("in-date").value,
-          status: "unpaid",
+          status: statusVal,
           generatedDate: `10/${cMonth}/${cYear}`,
-          paidDate: null,
+          paidDate: formattedPaidDate,
           history: [{ month: cycleShort, units: consumed }]
         };
         tenants.unshift(newRecord);
@@ -475,7 +492,6 @@
       const tenant = tenants.find(t => t.id === id);
       if (tenant) {
         tenant.status = tenant.status === 'paid' ? 'unpaid' : 'paid';
-        
         if (tenant.status === 'paid') {
           const now = new Date();
           const dd = String(now.getDate()).padStart(2, '0');
@@ -485,7 +501,6 @@
         } else {
           tenant.paidDate = null;
         }
-
         saveState();
         if (selectedTenantForShare && selectedTenantForShare.id === id) {
           viewTenant(id);
@@ -508,6 +523,8 @@
         document.getElementById("modal-title").innerText = "Add Tenant Bill";
       } else if (!document.getElementById("edit-id").value) {
         document.getElementById("in-date").value = `${currentCycle}-15`;
+        document.getElementById("in-status").value = 'unpaid';
+        document.getElementById("in-paid-date").value = '';
       }
       document.getElementById('modal-new').classList.toggle('hidden', !show);
     }
@@ -530,12 +547,9 @@
           const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
           const isOverdue = checkIsOverdue(t);
           const totalTenantDue = isOverdue ? t.amountDue + (t.fine || 50) : t.amountDue;
-
           totalUnits += consumed;
           totalBilled += totalTenantDue;
-          if (t.status === 'paid') {
-            totalCollected += totalTenantDue;
-          }
+          if (t.status === 'paid') totalCollected += totalTenantDue;
         });
 
         const pending = Math.max(0, totalBilled - totalCollected);
@@ -635,18 +649,10 @@
           </div>
           
           <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="openEditModal('${t.id}')" class="text-xs bg-gray-800 text-yellow-400 px-3 py-2 rounded-lg font-bold hover:bg-gray-700 border border-gray-700" title="Edit Readings">
-              ✏️ Edit
-            </button>
-            <button onclick="togglePaid('${t.id}')" class="text-xs px-3 py-2 rounded-lg font-bold border ${t.status === 'paid' ? 'border-gray-700 text-gray-400' : 'border-green-600 bg-green-600/10 text-green-400'}">
-              ${t.status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
-            </button>
-            <button onclick="viewTenant('${t.id}')" class="text-xs bg-gray-800 text-gray-200 px-3 py-2 rounded-lg font-bold hover:bg-gray-700">
-              View Card
-            </button>
-            <button onclick="deleteTenant('${t.id}', '${t.name}')" class="text-xs bg-red-950/60 text-red-400 border border-red-800/60 px-2.5 py-2 rounded-lg font-bold hover:bg-red-900/80 transition">
-              🗑️
-            </button>
+            <button onclick="openEditModal('${t.id}')" class="text-xs bg-gray-800 text-yellow-400 px-3 py-2 rounded-lg font-bold hover:bg-gray-700 border border-gray-700">✏️ Edit</button>
+            <button onclick="togglePaid('${t.id}')" class="text-xs px-3 py-2 rounded-lg font-bold border ${t.status === 'paid' ? 'border-gray-700 text-gray-400' : 'border-green-600 bg-green-600/10 text-green-400'}">${t.status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}</button>
+            <button onclick="viewTenant('${t.id}')" class="text-xs bg-gray-800 text-gray-200 px-3 py-2 rounded-lg font-bold hover:bg-gray-700">View Card</button>
+            <button onclick="deleteTenant('${t.id}', '${t.name}')" class="text-xs bg-red-950/60 text-red-400 border border-red-800/60 px-2.5 py-2 rounded-lg font-bold hover:bg-red-900/80">🗑️</button>
           </div>
         `;
         listEl.appendChild(card);
@@ -758,7 +764,8 @@
 
       updateChart(t.history);
     }
-async function shareBillToWhatsApp() {
+
+    async function shareBillToWhatsApp() {
       if (!selectedTenantForShare) return;
       const t = selectedTenantForShare;
       const card = document.getElementById("bill-card");
