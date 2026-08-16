@@ -766,43 +766,69 @@
     }
 
     async function shareBillToWhatsApp() {
-      if (!selectedTenantForShare) return;
-      const t = selectedTenantForShare;
-      const card = document.getElementById("bill-card");
-      const cleanPhone = t.phone ? t.phone.replace(/\D/g, '') : '';
-      const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
-      const isOverdue = checkIsOverdue(t);
-      const fineAmount = isOverdue ? (t.fine || 50) : 0;
-      const totalAmount = t.amountDue + fineAmount;
-      const cycleFormatted = formatCycleLabel(currentCycle);
+  if (!selectedTenantForShare) return;
+  const t = selectedTenantForShare;
+  const card = document.getElementById("bill-card");
+  const cleanPhone = t.phone ? t.phone.replace(/\D/g, '') : '';
+  const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
+  const isOverdue = checkIsOverdue(t);
+  const fineAmount = isOverdue ? (t.fine || 50) : 0;
+  const totalAmount = t.amountDue + fineAmount;
+  const cycleFormatted = formatCycleLabel(currentCycle);
 
-      const [cYear, cMonth] = currentCycle.split("-");
-      const genDate = t.generatedDate || `10/${cMonth}/${cYear}`;
+  const [cYear, cMonth] = currentCycle.split("-");
+  const genDate = t.generatedDate || `10/${cMonth}/${cYear}`;
 
-      const textMsg = `Hello ${t.name},\nYour Electricity Bill for ${cycleFormatted} is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nBill Date: ${genDate}\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}.\nPayment Date: ${t.paidDate || 'Pending'}.${fineAmount > 0 ? '\nLate Fine Applied: ₹' + fineAmount : ''}\n\nPlease pay promptly.`;
-
-      try {
-        const canvas = await html2canvas(card, { backgroundColor: '#111111', scale: 2 });
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        const file = new File([blob], `${t.name}_${currentCycle}_Bill.png`, { type: 'image/png' });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `Bill - ${t.name}`,
-            text: textMsg
-          });
-        } else {
-          downloadBillCard();
-          const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`;
-          window.open(waUrl, '_blank');
-        }
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`, '_blank');
-        }
-      }
+  // Package all tenant details and cross-cycle history into URL payload
+  const historySummary = [];
+  allCycles.forEach(c => {
+    const cData = JSON.parse(localStorage.getItem(`powerbill_data_${c}`)) || [];
+    const rec = cData.find(item => item.name.toLowerCase() === t.name.toLowerCase());
+    if (rec) {
+      historySummary.push({
+        cycle: c,
+        consumed: rec.consumed !== undefined ? rec.consumed : (rec.currReading - rec.prevReading),
+        amountDue: rec.amountDue + (checkIsOverdue(rec) ? (rec.fine || 50) : 0),
+        status: rec.status,
+        paidDate: rec.paidDate
+      });
     }
+  });
+
+  const payload = {
+    cycle: currentCycle,
+    cycles: allCycles,
+    tenant: t,
+    history: historySummary
+  };
+  const encodedPayload = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const tenantPortalUrl = `${window.location.origin}/tenant.html?d=${encodedPayload}`;
+
+  const textMsg = `Hello ${t.name},\nYour Electricity Bill for ${cycleFormatted} is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nBill Date: ${genDate}\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}.\nPayment Date: ${t.paidDate || 'Pending'}.${fineAmount > 0 ? '\nLate Fine Applied: ₹' + fineAmount : ''}\n\nView and download your digital receipt:\n${tenantPortalUrl}\n\nPlease pay promptly.`;
+
+  try {
+    const canvas = await html2canvas(card, { backgroundColor: '#111111', scale: 2 });
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const file = new File([blob], `${t.name}_${currentCycle}_Bill.png`, { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: `Bill - ${t.name}`,
+        text: textMsg
+      });
+    } else {
+      downloadBillCard();
+      const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`;
+      window.open(waUrl, '_blank');
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`, '_blank');
+    }
+  }
+    }
+      
 
     function downloadBillCard() {
       const card = document.getElementById("bill-card");
