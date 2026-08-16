@@ -10,38 +10,41 @@
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen pb-16 font-sans">
 
-  <!-- Read-Only Header -->
+  <!-- Header with Discreet Admin Access -->
   <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-lg">
     <div class="max-w-md mx-auto flex justify-between items-center">
       <div class="flex items-center gap-2">
-        <img src="1000167585.png" alt="Logo" class="w-7 h-7 rounded-md object-cover border border-gray-700" onerror="this.style.display='none'">
+        <button onclick="promptAdminLogin()" title="Admin Login" class="focus:outline-none">
+          <img src="1000167585.png" alt="Logo" class="w-7 h-7 rounded-md object-cover border border-gray-700 hover:border-red-500 transition" onerror="this.style.display='none'">
+        </button>
         <div>
           <h1 class="text-base font-black text-white tracking-wide">Ali Market Portal</h1>
           <p class="text-[10px] text-gray-400">Tenant Electricity Receipt</p>
         </div>
       </div>
-      <!-- Month Cycle Selector for Tenant -->
-      <select id="cycle-select" onchange="renderTenantData(this.value)" class="bg-gray-950 border border-gray-700 text-yellow-400 font-bold text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-yellow-500">
-        <!-- Filled dynamically -->
-      </select>
+      <div class="flex items-center gap-2">
+        <select id="cycle-select" onchange="renderTenantData(this.value)" class="bg-gray-950 border border-gray-700 text-yellow-400 font-bold text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-yellow-500">
+        </select>
+        <!-- Lock Button for Admin -->
+        <button onclick="promptAdminLogin()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-2.5 py-1.5 rounded-lg font-bold border border-gray-700 flex items-center gap-1">
+          🔐 <span class="hidden sm:inline">Admin</span>
+        </button>
+      </div>
     </div>
   </header>
 
   <main class="max-w-md mx-auto p-4 space-y-6">
 
-    <!-- Tenant Search/Selector (Shown only if no valid parameter is passed in URL) -->
     <div id="selector-box" class="hidden bg-gray-900 border border-gray-800 p-4 rounded-xl space-y-2">
       <label class="text-xs text-gray-400 block font-bold">Select Your Shop / Name:</label>
       <select id="tenant-select" onchange="loadTenantByName(this.value)" class="w-full bg-gray-950 border border-gray-700 text-white text-sm rounded-lg p-2.5">
-        <!-- Filled dynamically -->
       </select>
     </div>
 
-    <!-- Dark-Themed Bill Card for Viewing & Export -->
+    <!-- Bill Card -->
     <div class="flex justify-center">
       <div id="bill-card" class="w-full bg-[#111111] text-gray-200 overflow-hidden relative font-sans shadow-2xl pb-6 border border-gray-800 rounded-2xl">
         
-        <!-- Card Header & Badges -->
         <div class="flex justify-between items-start pt-6 pb-4 pl-6 pr-0">
           <div>
             <h1 class="text-2xl font-black text-white tracking-tight" id="card-name">--</h1>
@@ -54,7 +57,6 @@
 
         <div class="px-6 space-y-4">
           
-          <!-- Key Dates Block -->
           <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
             <div>
               <span class="text-gray-500 block text-[10px] uppercase font-bold">Bill Generated</span>
@@ -66,7 +68,6 @@
             </div>
           </div>
 
-          <!-- Account Summary -->
           <div>
             <h2 class="text-[11px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Meter Reading</h2>
             <hr class="border-gray-800 mb-2">
@@ -78,7 +79,6 @@
             </div>
           </div>
 
-          <!-- Payment Breakdown -->
           <div>
             <h2 class="text-[11px] font-bold text-gray-400 tracking-wider mb-1 uppercase">Payment Breakdown</h2>
             <hr class="border-gray-800 mb-2">
@@ -92,7 +92,6 @@
             </div>
           </div>
 
-          <!-- Notice -->
           <p class="text-gray-500 text-[11px] leading-relaxed italic text-center pt-1">
             Note: ₹50 late fine applies if payment is settled after the due date.
           </p>
@@ -107,7 +106,7 @@
       </button>
     </div>
 
-    <!-- Previous Months History Table -->
+    <!-- Historical Usage Table -->
     <section class="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
       <h3 class="text-xs font-bold text-white uppercase tracking-wider">📜 Your Payment & Usage History</h3>
       <div class="overflow-x-auto">
@@ -122,7 +121,6 @@
             </tr>
           </thead>
           <tbody id="history-rows" class="divide-y divide-gray-800">
-            <!-- Populated dynamically -->
           </tbody>
         </table>
       </div>
@@ -131,7 +129,30 @@
   </main>
 
   <script>
-    const allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
+    const ADMIN_PIN = "2815"; // Default PIN to return to index.html
+
+    function promptAdminLogin() {
+      const pin = prompt("Enter Admin PIN to access dashboard:");
+      if (pin === ADMIN_PIN) {
+        window.location.href = "index.html";
+      } else if (pin !== null) {
+        alert("Incorrect PIN. Access restricted to Admin only.");
+      }
+    }
+
+    // Unpack URL Payload (For multi-device sync without backend)
+    let payloadData = null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const encodedPayload = urlParams.get("d");
+    if (encodedPayload) {
+      try {
+        payloadData = JSON.parse(decodeURIComponent(escape(atob(encodedPayload))));
+      } catch (err) {
+        console.error("Payload decode error:", err);
+      }
+    }
+
+    const allCycles = payloadData && payloadData.cycles ? payloadData.cycles : (JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"]);
     let currentSelectedTenant = null;
 
     function formatCycleLabel(cycleKey) {
@@ -164,10 +185,11 @@
     }
 
     function getTargetTenant() {
-      const params = new URLSearchParams(window.location.search);
-      const nameParam = params.get("tenant") || params.get("name");
-      const phoneParam = params.get("phone");
-
+      if (payloadData && payloadData.tenant) {
+        return payloadData.tenant;
+      }
+      const nameParam = urlParams.get("tenant") || urlParams.get("name");
+      const phoneParam = urlParams.get("phone");
       const activeCycle = document.getElementById("cycle-select").value || allCycles[0];
       const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${activeCycle}`)) || [];
 
@@ -182,6 +204,7 @@
     }
 
     function initTenantList() {
+      if (payloadData) return; // Specific tenant locked from payload
       const activeCycle = document.getElementById("cycle-select").value || allCycles[0];
       const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${activeCycle}`)) || [];
       const tenantSelect = document.getElementById("tenant-select");
@@ -194,8 +217,7 @@
         tenantSelect.appendChild(opt);
       });
 
-      const params = new URLSearchParams(window.location.search);
-      if (!params.get("tenant") && !params.get("phone")) {
+      if (!urlParams.get("tenant") && !urlParams.get("phone")) {
         document.getElementById("selector-box").classList.remove("hidden");
       }
     }
@@ -208,9 +230,14 @@
     }
 
     function renderTenantData(selectedCycle) {
-      const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${selectedCycle}`)) || [];
-      const tenantName = currentSelectedTenant ? currentSelectedTenant.name : (getTargetTenant() ? getTargetTenant().name : "");
-      const t = cycleData.find(item => item.name.toLowerCase() === tenantName.toLowerCase());
+      let t = null;
+      if (payloadData && payloadData.tenant && payloadData.cycle === selectedCycle) {
+        t = payloadData.tenant;
+      } else {
+        const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${selectedCycle}`)) || [];
+        const tenantName = currentSelectedTenant ? currentSelectedTenant.name : (getTargetTenant() ? getTargetTenant().name : "");
+        t = cycleData.find(item => item.name.toLowerCase() === tenantName.toLowerCase()) || (payloadData ? payloadData.tenant : null);
+      }
 
       if (!t) return;
       currentSelectedTenant = t;
@@ -250,12 +277,32 @@
         badge.className = "bg-yellow-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black uppercase";
       }
 
-      renderHistoricalTable(t.name);
+      renderHistoricalTable(t.name, t);
     }
 
-    function renderHistoricalTable(tenantName) {
+    function renderHistoricalTable(tenantName, activeTenantObj) {
       const historyBody = document.getElementById("history-rows");
       historyBody.innerHTML = "";
+
+      if (payloadData && payloadData.history) {
+        payloadData.history.forEach(item => {
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-gray-950/50";
+          tr.innerHTML = `
+            <td class="p-2 font-medium text-white">${formatCycleLabel(item.cycle || payloadData.cycle)}</td>
+            <td class="p-2 font-mono">${item.consumed || item.units || 0}</td>
+            <td class="p-2 font-mono font-bold">₹${(item.amountDue || item.total || 0).toLocaleString()}</td>
+            <td class="p-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+                item.status === 'paid' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'
+              }">${(item.status || 'PAID').toUpperCase()}</span>
+            </td>
+            <td class="p-2 font-mono text-gray-400">${item.paidDate || 'Paid'}</td>
+          `;
+          historyBody.appendChild(tr);
+        });
+        return;
+      }
 
       allCycles.forEach(cycleKey => {
         const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${cycleKey}`)) || [];
@@ -303,8 +350,9 @@
     initTenantList();
     currentSelectedTenant = getTargetTenant();
     if (allCycles.length > 0) {
-      document.getElementById("cycle-select").value = allCycles[allCycles.length - 1];
-      renderTenantData(document.getElementById("cycle-select").value);
+      const startCycle = payloadData ? payloadData.cycle : allCycles[allCycles.length - 1];
+      document.getElementById("cycle-select").value = startCycle;
+      renderTenantData(startCycle);
     }
   </script>
 </body>
