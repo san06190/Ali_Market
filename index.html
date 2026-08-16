@@ -317,6 +317,8 @@
     }
 
     function startNextCyclePrompt() {
+      // Add generatedDate when creating the cycle records:
+generatedDate: new Date().toLocaleDateString('en-GB'),
       const [currYear, currMonth] = currentCycle.split("-").map(Number);
       let nextMonth = currMonth + 1;
       let nextYear = currYear;
@@ -439,12 +441,14 @@
     }
 
     function togglePaid(id) {
-      const tenant = tenants.find(t => t.id === id);
-      if (tenant) {
-        tenant.status = tenant.status === 'paid' ? 'unpaid' : 'paid';
-        saveState();
-      }
-    }
+  const tenant = tenants.find(t => t.id === id);
+  if (tenant) {
+    tenant.status = tenant.status === 'paid' ? 'unpaid' : 'paid';
+    tenant.paidDate = tenant.status === 'paid' ? new Date().toLocaleDateString('en-GB') : null;
+    saveState();
+  }
+}
+
 
     function deleteTenant(id, name) {
       if (confirm(`Delete bill record for "${name}" from ${formatCycleLabel(currentCycle)}?`)) {
