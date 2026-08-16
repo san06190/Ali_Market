@@ -6,7 +6,7 @@
   <title>Tenant Electricity Manager</title>
   
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="icon.png" />
+  <link rel="icon" type="image/png" href="1000167585.png" />
 
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js -->
@@ -20,7 +20,7 @@
   <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-lg">
     <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between sm:items-center gap-3">
       <div>
-        <h1 class="text-xl font-black text-white tracking-wide">⚡Ali Market E-Bill</h1>
+        <h1 class="text-xl font-black text-white tracking-wide">⚡ PowerBill Pro</h1>
         <div class="flex items-center gap-2 mt-1">
           <label class="text-xs text-gray-400">Billing Cycle:</label>
           <select id="cycle-select" onchange="switchCycle(this.value)" class="bg-gray-950 border border-gray-700 text-red-400 font-bold text-xs rounded-lg px-2 py-1 focus:ring-1 focus:ring-red-500">
@@ -287,6 +287,23 @@
       return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     }
 
+    // Accurate Overdue & Late Fine calculation
+    // Applies fine if still unpaid past dueDate OR if marked paid on a date after dueDate
+    function checkIsOverdue(t) {
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (t.status === 'paid' && t.paidDate) {
+        const parts = t.paidDate.split('/');
+        if (parts.length === 3) {
+          const [dd, mm, yyyy] = parts;
+          const paidIso = `${yyyy}-${mm}-${dd}`;
+          return paidIso > t.dueDate;
+        }
+      }
+      
+      return t.dueDate < today && t.status === 'unpaid';
+    }
+
     function initCycleSelector() {
       const select = document.getElementById("cycle-select");
       select.innerHTML = "";
@@ -460,7 +477,6 @@
       if (tenant) {
         tenant.status = tenant.status === 'paid' ? 'unpaid' : 'paid';
         
-        // Exact calendar date when button is clicked
         if (tenant.status === 'paid') {
           const now = new Date();
           const dd = String(now.getDate()).padStart(2, '0');
@@ -504,7 +520,6 @@
     function renderCollectionSummary() {
       const tbody = document.getElementById("collection-history-body");
       tbody.innerHTML = "";
-      const today = new Date().toISOString().split('T')[0];
 
       allCycles.forEach(cycleKey => {
         const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${cycleKey}`)) || [];
@@ -514,13 +529,13 @@
 
         cycleData.forEach(t => {
           const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
-          const isOverdue = t.dueDate < today && t.status === 'unpaid';
-          const totalTenantDue = isOverdue ? t.amountDue + t.fine : t.amountDue;
+          const isOverdue = checkIsOverdue(t);
+          const totalTenantDue = isOverdue ? t.amountDue + (t.fine || 50) : t.amountDue;
 
           totalUnits += consumed;
           totalBilled += totalTenantDue;
           if (t.status === 'paid') {
-            totalCollected += t.amountDue;
+            totalCollected += totalTenantDue;
           }
         });
 
@@ -559,21 +574,23 @@
       let totalBilledAmt = 0;
       let totalPaidAmt = 0;
       let totalUnits = 0;
-      const today = new Date().toISOString().split('T')[0];
 
       tenants.forEach(t => {
         const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
-        const isOverdue = t.dueDate < today && t.status === 'unpaid';
-        const total = isOverdue ? t.amountDue + t.fine : t.amountDue;
+        const isOverdue = checkIsOverdue(t);
+        const fineAmount = isOverdue ? (t.fine || 50) : 0;
+        const total = t.amountDue + fineAmount;
 
         totalUnits += consumed;
         totalBilledAmt += total;
 
         if (t.status === 'paid') {
           paidCount++;
-          totalPaidAmt += t.amountDue;
+          totalPaidAmt += total;
         }
-        if (isOverdue) overdueCount++;
+        if (isOverdue && t.status === 'unpaid') {
+          overdueCount++;
+        }
       });
 
       const totalPendingAmt = Math.max(0, totalBilledAmt - totalPaidAmt);
@@ -590,7 +607,7 @@
       document.getElementById('filter-all').innerText = `All (${tenants.length})`;
 
       const filtered = tenants.filter(t => {
-        const isOverdue = t.dueDate < today && t.status === 'unpaid';
+        const isOverdue = checkIsOverdue(t);
         if (currentFilter === 'paid') return t.status === 'paid';
         if (currentFilter === 'unpaid') return t.status === 'unpaid';
         return true;
@@ -598,9 +615,10 @@
 
       filtered.forEach(t => {
         const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
-        const isOverdue = t.dueDate < today && t.status === 'unpaid';
+        const isOverdue = checkIsOverdue(t);
         const baseAmount = t.amountDue;
-        const total = isOverdue ? baseAmount + t.fine : baseAmount;
+        const fineAmount = isOverdue ? (t.fine || 50) : 0;
+        const total = baseAmount + fineAmount;
 
         const card = document.createElement("div");
         card.className = "bg-gray-900 border border-gray-800 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3";
@@ -614,7 +632,7 @@
               }">${t.status === 'paid' ? 'PAID' : isOverdue ? 'OVERDUE' : 'PENDING'}</span>
             </div>
             <p class="text-xs text-gray-400 mt-1">${consumed} Units (${t.prevReading} → ${t.currReading}) • Due: ${t.dueDate}</p>
-            <p class="text-base font-black text-gray-100 mt-1">₹${total.toLocaleString()} <span class="text-xs font-normal text-gray-400">(Base: ₹${baseAmount.toLocaleString()}${isOverdue ? ` + ₹${t.fine} Fine` : ''})</span></p>
+            <p class="text-base font-black text-gray-100 mt-1">₹${total.toLocaleString()} <span class="text-xs font-normal text-gray-400">(Base: ₹${baseAmount.toLocaleString()}${fineAmount > 0 ? ` + ₹${fineAmount} Fine` : ''})</span></p>
           </div>
           
           <div class="flex items-center gap-2 flex-wrap">
@@ -691,10 +709,9 @@
       detailSec.scrollIntoView({ behavior: 'smooth' });
 
       const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
-      const today = new Date().toISOString().split('T')[0];
-      const isOverdue = t.dueDate < today && t.status === 'unpaid';
+      const isOverdue = checkIsOverdue(t);
       const baseAmount = t.amountDue;
-      const fineAmount = isOverdue ? t.fine : 0;
+      const fineAmount = isOverdue ? (t.fine || 50) : 0;
       const totalAmount = baseAmount + fineAmount;
       const cycleFormatted = formatCycleLabel(currentCycle);
 
@@ -742,21 +759,21 @@
 
       updateChart(t.history);
     }
-
-    async function shareBillToWhatsApp() {
+async function shareBillToWhatsApp() {
       if (!selectedTenantForShare) return;
       const t = selectedTenantForShare;
       const card = document.getElementById("bill-card");
       const cleanPhone = t.phone ? t.phone.replace(/\D/g, '') : '';
       const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
-      const isOverdue = t.dueDate < new Date().toISOString().split('T')[0] && t.status === 'unpaid';
-      const totalAmount = isOverdue ? t.amountDue + t.fine : t.amountDue;
+      const isOverdue = checkIsOverdue(t);
+      const fineAmount = isOverdue ? (t.fine || 50) : 0;
+      const totalAmount = t.amountDue + fineAmount;
       const cycleFormatted = formatCycleLabel(currentCycle);
 
       const [cYear, cMonth] = currentCycle.split("-");
       const genDate = t.generatedDate || `10/${cMonth}/${cYear}`;
 
-      const textMsg = `Hello ${t.name},\nYour Electricity Bill for ${cycleFormatted} is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nBill Date: ${genDate}\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}.\nPayment Date: ${t.paidDate || 'Pending'}.\n\nPlease pay promptly.`;
+      const textMsg = `Hello ${t.name},\nYour Electricity Bill for ${cycleFormatted} is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nBill Date: ${genDate}\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}.\nPayment Date: ${t.paidDate || 'Pending'}.${fineAmount > 0 ? '\nLate Fine Applied: ₹' + fineAmount : ''}\n\nPlease pay promptly.`;
 
       try {
         const canvas = await html2canvas(card, { backgroundColor: '#111111', scale: 2 });
