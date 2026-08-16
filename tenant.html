@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tenant Bill Portal - Ali Market</title>
-  <link rel="icon" type="image/png" href="1000167585.png" />
+  <link rel="icon" type="image/png" href="icon.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -58,7 +58,7 @@
           <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
             <div>
               <span class="text-gray-500 block text-[10px] uppercase font-bold">Bill Generated</span>
-              <span id="card-gen-date" class="text-gray-200 font-mono font-bold">--</span>
+              <span id="card-gen-date" class="text-gray-200 font-mono font-bold">10/08/2026</span>
             </div>
             <div>
               <span class="text-gray-500 block text-[10px] uppercase font-bold">Payment Status Date</span>
@@ -140,7 +140,6 @@
       return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     }
 
-    // Populate cycle dropdown
     function initCycles() {
       const select = document.getElementById("cycle-select");
       select.innerHTML = "";
@@ -157,7 +156,6 @@
       const nameParam = params.get("tenant") || params.get("name");
       const phoneParam = params.get("phone");
 
-      // Read from active cycle
       const activeCycle = document.getElementById("cycle-select").value || allCycles[0];
       const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${activeCycle}`)) || [];
 
@@ -213,9 +211,10 @@
       const totalAmount = baseAmount + fineAmount;
       const cycleFormatted = formatCycleLabel(selectedCycle);
 
-      // Default bill generation date to the 1st of that billing month if not explicitly stored
-      const generatedDate = t.generatedDate || `${selectedCycle}-01`;
-      const paidDate = t.paidDate || (t.status === 'paid' ? 'Paid on record' : 'Not Paid Yet');
+      // Default bill generation date to the 10th of that cycle
+      const [cYear, cMonth] = selectedCycle.split("-");
+      const generatedDate = t.generatedDate || `10/${cMonth}/${cYear}`;
+      const paidDate = t.paidDate || (t.status === 'paid' ? 'Paid on Record' : 'Not Paid Yet');
 
       document.getElementById("card-name").innerText = t.name;
       document.getElementById("card-cycle-label").innerText = cycleFormatted;
@@ -232,13 +231,13 @@
       const badge = document.getElementById("card-badge");
       if (t.status === 'paid') {
         badge.innerText = "STATUS: PAID";
-        badge.className = "bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
+        badge.className = "bg-emerald-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black uppercase";
       } else if (isOverdue) {
         badge.innerText = "STATUS: OVERDUE";
-        badge.className = "bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
+        badge.className = "bg-red-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black uppercase";
       } else {
         badge.innerText = "STATUS: PENDING";
-        badge.className = "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
+        badge.className = "bg-yellow-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black uppercase";
       }
 
       renderHistoricalTable(t.name);
