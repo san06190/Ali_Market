@@ -317,8 +317,7 @@
     }
 
     function startNextCyclePrompt() {
-      // Add generatedDate when creating the cycle records:
-generatedDate: new Date().toLocaleDateString('en-GB'),
+      
       const [currYear, currMonth] = currentCycle.split("-").map(Number);
       let nextMonth = currMonth + 1;
       let nextYear = currYear;
@@ -331,7 +330,9 @@ generatedDate: new Date().toLocaleDateString('en-GB'),
       
         if (confirm(`Do you want to create a new billing cycle for "${nextCycleName}"?\n\n• Each tenant's current reading will become their previous reading.\n• Status will reset to Unpaid.`)) {
         const defaultDueDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-15`;
-
+// Add generatedDate when creating the cycle records:
+const generatedDate: new Date().toLocaleDateString('en-GB');
+  
         const newCycleTenants = tenants.map(t => {
           const carriedPrev = t.currReading;
           const carriedHistory = [...(t.history || [])];
@@ -348,6 +349,7 @@ generatedDate: new Date().toLocaleDateString('en-GB'),
             fine: t.fine || 50,
             dueDate: defaultDueDate,
             status: "unpaid",
+            generatedDate: genDateFormatted,
             history: carriedHistory
           };
         });
