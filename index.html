@@ -280,16 +280,6 @@
     let currentFilter = 'all';
     let chartInstance = null;
     let selectedTenantForShare = null;
-// Remove September 2026 data
-localStorage.removeItem("powerbill_data_2026-09");
-
-// Remove 2026-09 from the active cycle list
-let cycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || [];
-cycles = cycles.filter(c => c !== "2026-09");
-localStorage.setItem("powerbill_cycles", JSON.stringify(cycles));
-
-// Set active cycle back to August 2026 and reload
-localStorage.setItem("powerbill_current_cycle", "2026-08");
 
     
     function formatCycleLabel(cycleKey) {
