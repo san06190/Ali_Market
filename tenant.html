@@ -158,14 +158,16 @@
 
     const ADMIN_MASTER_PIN = "2815";
 
-    function promptAdminLogin() {
+        function promptAdminLogin() {
       const pin = prompt("Enter Admin PIN to access dashboard:");
       if (pin === ADMIN_MASTER_PIN) {
+        localStorage.setItem("powerbill_admin_auth", "true"); // Stores auth before navigation
         window.location.href = "index.html";
       } else if (pin !== null) {
         alert("Incorrect PIN. Access restricted to Admin only.");
       }
     }
+
 
     let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
     let currentSelectedTenant = null;
