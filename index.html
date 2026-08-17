@@ -19,6 +19,7 @@
 <body class="bg-gray-950 text-gray-100 min-h-screen pb-20 font-sans">
 
   <!-- Admin Auth Overlay -->
+    <!-- Admin Auth Overlay (Loop-Proof) -->
   <div id="admin-auth-gate" class="fixed inset-0 bg-gray-950 flex items-center justify-center p-4 z-[9999]">
     <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl">
       <div class="w-12 h-12 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
@@ -28,25 +29,28 @@
         <h2 class="text-base font-black text-white">Admin Authentication</h2>
         <p class="text-xs text-gray-400 mt-1">Enter PIN to access PowerBill Pro</p>
       </div>
-      <form onsubmit="verifyAdminPin(event)" class="space-y-3">
+      <div class="space-y-3">
         <input 
           id="admin-pin-input" 
           type="password" 
           maxlength="8" 
+          inputmode="numeric"
           placeholder="Enter PIN" 
+          onkeydown="if(event.key === 'Enter') verifyAdminPin();"
           class="w-full bg-gray-950 border border-gray-700 text-center tracking-widest text-lg font-mono rounded-lg p-2.5 text-white focus:outline-none focus:border-red-500" 
-          required 
           autofocus
         />
         <p id="auth-error-msg" class="text-red-400 text-xs hidden font-medium">Incorrect PIN</p>
         <button 
-          type="submit" 
-          class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
+          type="button" 
+          onclick="verifyAdminPin()" 
+          class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-lg">
           Unlock Dashboard
         </button>
-      </form>
+      </div>
     </div>
   </div>
+
 
   <!-- Header -->
   <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-lg">
@@ -319,31 +323,39 @@
     // ==========================================
     // 2. ADMIN AUTHENTICATION
     // ==========================================
+    
+
+    // 2. ADMIN AUTHENTICATION (Using localStorage to prevent PWA session drops)
     function checkAdminAuth() {
-      const isAuth = sessionStorage.getItem("powerbill_admin_auth");
+      const isAuth = localStorage.getItem("powerbill_admin_auth");
       const gate = document.getElementById("admin-auth-gate");
       if (isAuth === "true") {
-        if (gate) gate.classList.add("hidden");
+        if (gate) gate.style.display = "none";
       } else {
-        if (gate) gate.classList.remove("hidden");
+        if (gate) gate.style.display = "flex";
       }
     }
 
-    function verifyAdminPin(e) {
-      e.preventDefault();
-      const inputPin = document.getElementById("admin-pin-input").value;
+    function verifyAdminPin() {
+      const inputEl = document.getElementById("admin-pin-input");
+      const inputPin = inputEl.value.trim();
       const errorMsg = document.getElementById("auth-error-msg");
+      const gate = document.getElementById("admin-auth-gate");
 
       if (inputPin === ADMIN_MASTER_PIN) {
-        sessionStorage.setItem("powerbill_admin_auth", "true");
-        document.getElementById("admin-auth-gate").classList.add("hidden");
-        errorMsg.classList.add("hidden");
+        localStorage.setItem("powerbill_admin_auth", "true");
+        if (gate) gate.style.display = "none";
+        if (errorMsg) errorMsg.classList.add("hidden");
       } else {
-        errorMsg.classList.remove("hidden");
-        document.getElementById("admin-pin-input").value = "";
+        if (errorMsg) errorMsg.classList.remove("hidden");
+        inputEl.value = "";
+        inputEl.focus();
       }
     }
+
+    // Run auth check immediately
     checkAdminAuth();
+
 
     // ==========================================
     // 3. SEED DEFAULT DATA & STATE
