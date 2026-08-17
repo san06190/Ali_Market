@@ -6,7 +6,7 @@
   <title>Tenant Electricity Manager - PowerBill Pro</title>
   
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="icon.png" />
+  <link rel="icon" type="image/png" href="1000167585.png" />
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,9 +18,10 @@
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen pb-20 font-sans">
 
-  <!-- Admin Auth Overlay -->
-    <!-- Admin Auth Overlay -->
-  <div id="admin-auth-gate" class="fixed inset-0 bg-gray-950 flex items-center justify-center p-4 z-[9999]">
+  <!-- ========================================== -->
+  <!-- ISOLATED & CRASH-PROOF ADMIN AUTH OVERLAY -->
+  <!-- ========================================== -->
+  <div id="admin-auth-gate" class="fixed inset-0 bg-gray-950 flex items-center justify-center p-4 z-[99999]">
     <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl">
       <div class="w-12 h-12 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
         🔒
@@ -36,20 +37,68 @@
           maxlength="8" 
           inputmode="numeric"
           placeholder="Enter PIN" 
-          onkeydown="if(event.key === 'Enter') verifyAdminPin();"
+          onkeydown="if(event.key === 'Enter') window.verifyAdminPin();"
           class="w-full bg-gray-950 border border-gray-700 text-center tracking-widest text-lg font-mono rounded-lg p-2.5 text-white focus:outline-none focus:border-red-500" 
           autofocus
         />
-        <p id="auth-error-msg" class="text-red-400 text-xs hidden font-medium">Incorrect PIN</p>
+        <p id="auth-error-msg" class="text-red-400 text-xs hidden font-bold">⚠️ Incorrect PIN. Try again.</p>
         <button 
+          id="admin-unlock-btn"
           type="button" 
-          onclick="verifyAdminPin()" 
-          class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
+          onclick="window.verifyAdminPin()" 
+          class="w-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold py-2.5 rounded-lg text-sm transition-all shadow-lg cursor-pointer">
           Unlock Dashboard
         </button>
       </div>
     </div>
   </div>
+
+  <!-- Immediate, standalone auth script (Runs before external dependencies) -->
+  <script>
+    (function() {
+      const ADMIN_PIN = "2815";
+
+      window.checkAdminAuth = function() {
+        try {
+          const isAuth = localStorage.getItem("powerbill_admin_auth");
+          const gate = document.getElementById("admin-auth-gate");
+          if (isAuth === "true" && gate) {
+            gate.style.display = "none";
+          }
+        } catch(e) {
+          console.error(e);
+        }
+      };
+
+      window.verifyAdminPin = function() {
+        const input = document.getElementById("admin-pin-input");
+        const errorMsg = document.getElementById("auth-error-msg");
+        const gate = document.getElementById("admin-auth-gate");
+        const val = input ? input.value.trim() : "";
+
+        if (val === ADMIN_PIN) {
+          localStorage.setItem("powerbill_admin_auth", "true");
+          if (errorMsg) errorMsg.classList.add("hidden");
+          if (gate) {
+            gate.style.opacity = "0";
+            gate.style.transition = "opacity 0.2s ease";
+            setTimeout(function() { gate.style.display = "none"; }, 200);
+          }
+        } else {
+          if (errorMsg) {
+            errorMsg.classList.remove("hidden");
+            errorMsg.innerText = "⚠️ Incorrect PIN (" + (val ? val : "empty") + ")";
+          }
+          if (input) {
+            input.value = "";
+            input.focus();
+          }
+        }
+      };
+
+      window.checkAdminAuth();
+    })();
+  </script>
 
   <!-- Header -->
   <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-lg">
@@ -73,6 +122,9 @@
         </button>
         <button onclick="toggleModal(true)" class="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-4 py-2 rounded-lg font-bold transition">
           + Add Tenant
+        </button>
+        <button onclick="localStorage.removeItem('powerbill_admin_auth'); location.reload();" class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-700" title="Lock Dashboard">
+          🔒 Lock
         </button>
       </div>
     </div>
@@ -293,9 +345,10 @@
     </div>
   </div>
 
+  <!-- Main Application Script -->
   <script>
     // ==========================================
-    // 1. FIREBASE & ADMIN CONFIGURATION
+    // 1. FIREBASE CONFIGURATION
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyCDfINCUXckED7ruCuCsSOfjX9XVEDUA38",
@@ -308,51 +361,19 @@
     };
 
     let db = null;
-    if (window.firebase) {
-      try {
+    try {
+      if (window.firebase) {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
-      } catch (err) {
-        console.warn("Firebase init failed:", err);
       }
+    } catch (err) {
+      console.warn("Firebase initialization notice:", err);
     }
-
-        const ADMIN_MASTER_PIN = "2815";
-
-    function checkAdminAuth() {
-      const isAuth = localStorage.getItem("powerbill_admin_auth");
-      const gate = document.getElementById("admin-auth-gate");
-      if (isAuth === "true" && gate) {
-        gate.remove(); // Completely removes overlay from page so it cannot block you
-      }
-    }
-
-    function verifyAdminPin() {
-      const inputEl = document.getElementById("admin-pin-input");
-      const inputPin = inputEl ? inputEl.value.trim() : "";
-      const errorMsg = document.getElementById("auth-error-msg");
-      const gate = document.getElementById("admin-auth-gate");
-
-      if (inputPin === ADMIN_MASTER_PIN) {
-        localStorage.setItem("powerbill_admin_auth", "true");
-        if (gate) gate.remove(); // Removes gate instantly
-      } else {
-        if (errorMsg) errorMsg.classList.remove("hidden");
-        if (inputEl) {
-          inputEl.value = "";
-          inputEl.focus();
-        }
-      }
-    }
-
-    // Run auth check immediately
-    checkAdminAuth();
-    
-
 
     // ==========================================
-    // 3. SEED DEFAULT DATA & STATE
+    // 2. SEED DEFAULT DATA & STATE
     // ==========================================
+
     const defaultAugustTenants = [
       { id: "1", name: "Abu Bakar", phone: "919198002777", prevReading: 523, currReading: 556, consumed: 33, amountDue: 430, rate: 13.03, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026", history: [{month: "Jun", units: 28}, {month: "Jul", units: 30}, {month: "Aug", units: 33}] },
       { id: "2", name: "Akram", phone: "919628285790", prevReading: 915, currReading: 975, consumed: 60, amountDue: 780, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 54}, {month: "Jul", units: 58}, {month: "Aug", units: 60}] },
@@ -372,8 +393,8 @@
     let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
     let currentCycle = localStorage.getItem("powerbill_current_cycle") || "2026-08";
 
-    if (!localStorage.getItem(`powerbill_data_2026-08`)) {
-      localStorage.setItem(`powerbill_data_2026-08`, JSON.stringify(defaultAugustTenants));
+    if (!localStorage.getItem("powerbill_data_2026-08")) {
+      localStorage.setItem("powerbill_data_2026-08", JSON.stringify(defaultAugustTenants));
     }
 
     let tenants = JSON.parse(localStorage.getItem(`powerbill_data_${currentCycle}`)) || defaultAugustTenants;
@@ -409,7 +430,7 @@
     }
 
     // ==========================================
-    // 4. FIRESTORE SYNC LOGIC
+    // 3. FIRESTORE CLOUD SYNC
     // ==========================================
     async function syncFromFirestore() {
       if (!db) return;
@@ -450,7 +471,7 @@
           renderList();
         }
       } catch (err) {
-        console.warn("Firestore fetch failed, fallback to local storage:", err);
+        console.warn("Firestore sync fallback:", err);
       }
     }
 
@@ -477,7 +498,7 @@
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
       } catch (err) {
-        console.error("Firestore write failed:", err);
+        console.error("Firestore push error:", err);
       }
     }
 
@@ -487,12 +508,12 @@
         const docId = `${cycleKey}_${name.replace(/[^a-zA-Z0-9]/g, '_')}`;
         await db.collection('bills').doc(docId).delete();
       } catch (err) {
-        console.error("Firestore delete failed:", err);
+        console.error("Firestore delete error:", err);
       }
     }
 
     // ==========================================
-    // 5. APPLICATION UI LOGIC
+    // 4. UI AND DASHBOARD LOGIC
     // ==========================================
     function initCycleSelector() {
       const select = document.getElementById("cycle-select");
@@ -586,7 +607,9 @@
         renderList();
         closeDetails();
       }
-  function openEditModal(id) {
+    }
+
+    function openEditModal(id) {
       const t = tenants.find(item => item.id === id);
       if (!t) return;
 
@@ -863,7 +886,8 @@
         `;
         listEl.appendChild(card);
       });
-       renderCollectionSummary();
+
+      renderCollectionSummary();
     }
 
     function filterTenants(type) {
@@ -969,7 +993,6 @@
 
       updateChart(t.history);
     }
-
     async function shareBillToWhatsApp() {
       if (!selectedTenantForShare) return;
       const t = selectedTenantForShare;
@@ -1028,6 +1051,4 @@
     syncFromFirestore();
   </script>
 </body>
-</html>     
-      
-    
+</html>
