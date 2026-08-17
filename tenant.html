@@ -7,25 +7,28 @@
   <link rel="icon" type="image/png" href="icon.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <!-- Firebase App & Firestore SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen pb-16 font-sans">
 
-  <!-- Header with Discreet Admin Access -->
+  <!-- Header with PIN-Protected Admin Return -->
   <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-lg">
     <div class="max-w-md mx-auto flex justify-between items-center">
       <div class="flex items-center gap-2">
-        <button onclick="promptAdminLogin()" title="Admin Login" class="focus:outline-none">
+        <button onclick="promptAdminLogin()" title="Admin Access">
           <img src="1000167585.png" alt="Logo" class="w-7 h-7 rounded-md object-cover border border-gray-700 hover:border-red-500 transition" onerror="this.style.display='none'">
         </button>
         <div>
           <h1 class="text-base font-black text-white tracking-wide">Ali Market Portal</h1>
-          <p class="text-[10px] text-gray-400">Tenant Electricity Receipt</p>
+          <p class="text-[10px] text-gray-400">Live Cloud Receipt</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
         <select id="cycle-select" onchange="renderTenantData(this.value)" class="bg-gray-950 border border-gray-700 text-yellow-400 font-bold text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-yellow-500">
         </select>
-        <!-- Lock Button for Admin -->
         <button onclick="promptAdminLogin()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-2.5 py-1.5 rounded-lg font-bold border border-gray-700 flex items-center gap-1">
           🔐 <span class="hidden sm:inline">Admin</span>
         </button>
@@ -35,13 +38,14 @@
 
   <main class="max-w-md mx-auto p-4 space-y-6">
 
+    <!-- Tenant Selector (Visible only if no URL parameter passed) -->
     <div id="selector-box" class="hidden bg-gray-900 border border-gray-800 p-4 rounded-xl space-y-2">
       <label class="text-xs text-gray-400 block font-bold">Select Your Shop / Name:</label>
       <select id="tenant-select" onchange="loadTenantByName(this.value)" class="w-full bg-gray-950 border border-gray-700 text-white text-sm rounded-lg p-2.5">
       </select>
     </div>
 
-    <!-- Bill Card -->
+    <!-- Live Bill Card -->
     <div class="flex justify-center">
       <div id="bill-card" class="w-full bg-[#111111] text-gray-200 overflow-hidden relative font-sans shadow-2xl pb-6 border border-gray-800 rounded-2xl">
         
@@ -88,7 +92,7 @@
             </div>
             <div class="bg-gradient-to-r from-red-950/60 via-red-900/40 to-red-950/60 border border-red-500/30 rounded-xl p-3 flex justify-between items-center shadow-lg">
                <span class="text-red-300 font-bold uppercase text-xs">Total Amount Due:</span> 
-               <span class="text-red-400 font-black text-2xl font-mono" id="card-total">₹0</span>
+               <span id="card-total" class="text-red-400 font-black text-2xl font-mono">₹0</span>
             </div>
           </div>
 
@@ -106,7 +110,7 @@
       </button>
     </div>
 
-    <!-- Historical Usage Table -->
+    <!-- Live Historical Usage Table -->
     <section class="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
       <h3 class="text-xs font-bold text-white uppercase tracking-wider">📜 Your Payment & Usage History</h3>
       <div class="overflow-x-auto">
@@ -129,31 +133,43 @@
   </main>
 
   <script>
-    const ADMIN_PIN = "2815"; // Default PIN to return to index.html
+    // ==========================================
+    // 1. FIREBASE & ADMIN CONFIGURATION
+    // ==========================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyCDfINCUXckED7ruCuCsSOfjX9XVEDUA38",
+      authDomain: "ali-market-powerbill.firebaseapp.com",
+      projectId: "ali-market-powerbill",
+      storageBucket: "ali-market-powerbill.firebasestorage.app",
+      messagingSenderId: "712536072057",
+      appId: "1:712536072057:web:8a540cedcfd1ec338f19a8",
+      measurementId: "G-D6VR0KQ6DJ"
+    };
+
+    let db = null;
+    if (window.firebase) {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+      } catch (err) {
+        console.warn("Firebase init failed:", err);
+      }
+    }
+
+    const ADMIN_MASTER_PIN = "2815";
 
     function promptAdminLogin() {
       const pin = prompt("Enter Admin PIN to access dashboard:");
-      if (pin === ADMIN_PIN) {
+      if (pin === ADMIN_MASTER_PIN) {
         window.location.href = "index.html";
       } else if (pin !== null) {
         alert("Incorrect PIN. Access restricted to Admin only.");
       }
     }
 
-    // Unpack URL Payload (For multi-device sync without backend)
-    let payloadData = null;
-    const urlParams = new URLSearchParams(window.location.search);
-    const encodedPayload = urlParams.get("d");
-    if (encodedPayload) {
-      try {
-        payloadData = JSON.parse(decodeURIComponent(escape(atob(encodedPayload))));
-      } catch (err) {
-        console.error("Payload decode error:", err);
-      }
-    }
-
-    const allCycles = payloadData && payloadData.cycles ? payloadData.cycles : (JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"]);
+    let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
     let currentSelectedTenant = null;
+    let cloudBills = [];
 
     function formatCycleLabel(cycleKey) {
       const [year, month] = cycleKey.split("-");
@@ -184,27 +200,17 @@
       });
     }
 
-    function getTargetTenant() {
-      if (payloadData && payloadData.tenant) {
-        return payloadData.tenant;
-      }
-      const nameParam = urlParams.get("tenant") || urlParams.get("name");
-      const phoneParam = urlParams.get("phone");
+    function getTargetTenantName() {
+      const params = new URLSearchParams(window.location.search);
+      const nameParam = params.get("tenant") || params.get("name");
+      if (nameParam) return nameParam;
+
       const activeCycle = document.getElementById("cycle-select").value || allCycles[0];
       const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${activeCycle}`)) || [];
-
-      if (nameParam) {
-        return cycleData.find(t => t.name.toLowerCase() === nameParam.toLowerCase()) || cycleData[0];
-      }
-      if (phoneParam) {
-        const cleanTarget = phoneParam.replace(/\D/g, '');
-        return cycleData.find(t => t.phone && t.phone.replace(/\D/g, '').includes(cleanTarget)) || cycleData[0];
-      }
-      return cycleData[0];
+      return cycleData.length > 0 ? cycleData[0].name : "Danish";
     }
 
     function initTenantList() {
-      if (payloadData) return; // Specific tenant locked from payload
       const activeCycle = document.getElementById("cycle-select").value || allCycles[0];
       const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${activeCycle}`)) || [];
       const tenantSelect = document.getElementById("tenant-select");
@@ -217,7 +223,8 @@
         tenantSelect.appendChild(opt);
       });
 
-      if (!urlParams.get("tenant") && !urlParams.get("phone")) {
+      const params = new URLSearchParams(window.location.search);
+      if (!params.get("tenant") && !params.get("phone")) {
         document.getElementById("selector-box").classList.remove("hidden");
       }
     }
@@ -229,14 +236,64 @@
       renderTenantData(activeCycle);
     }
 
+    async function loadTenantFromFirestore() {
+      const targetName = getTargetTenantName();
+      if (!db) {
+        initCycles();
+        initTenantList();
+        renderTenantData(document.getElementById("cycle-select").value);
+        return;
+      }
+
+      try {
+        const snapshot = await db.collection('bills').where('name', '==', targetName).get();
+        if (!snapshot.empty) {
+          cloudBills = [];
+          snapshot.forEach(doc => {
+            const d = doc.data();
+            cloudBills.push({
+              id: d.id,
+              cycle: d.cycle,
+              name: d.name,
+              phone: d.phone,
+              prevReading: Number(d.prevReading),
+              currReading: Number(d.currReading),
+              consumed: Number(d.consumed),
+              rate: Number(d.rate || 13),
+              amountDue: Number(d.amountDue),
+              fine: Number(d.fine || 50),
+              dueDate: d.dueDate,
+              status: d.status,
+              generatedDate: d.generatedDate,
+              paidDate: d.paidDate
+            });
+          });
+
+          allCycles = [...new Set(cloudBills.map(b => b.cycle))].sort();
+        }
+      } catch (err) {
+        console.warn("Firestore fetch failed, using local storage:", err);
+      }
+
+      initCycles();
+      initTenantList();
+      if (allCycles.length > 0) {
+        document.getElementById("cycle-select").value = allCycles[allCycles.length - 1];
+        renderTenantData(document.getElementById("cycle-select").value);
+      }
+    }
+
     function renderTenantData(selectedCycle) {
+      const targetName = currentSelectedTenant ? currentSelectedTenant.name : getTargetTenantName();
       let t = null;
-      if (payloadData && payloadData.tenant && payloadData.cycle === selectedCycle) {
-        t = payloadData.tenant;
-      } else {
+
+      if (cloudBills.length > 0) {
+        t = cloudBills.find(b => b.cycle === selectedCycle && b.name.toLowerCase() === targetName.toLowerCase());
+      }
+      
+      if (!t) {
         const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${selectedCycle}`)) || [];
-        const tenantName = currentSelectedTenant ? currentSelectedTenant.name : (getTargetTenant() ? getTargetTenant().name : "");
-        t = cycleData.find(item => item.name.toLowerCase() === tenantName.toLowerCase()) || (payloadData ? payloadData.tenant : null);
+        t = cycleData.find(item => item.name.toLowerCase() === targetName.toLowerCase()) || cycleData[0];
       }
 
       if (!t) return;
@@ -277,59 +334,42 @@
         badge.className = "bg-yellow-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black uppercase";
       }
 
-      renderHistoricalTable(t.name, t);
+      renderHistoricalTable(t.name);
     }
 
-    function renderHistoricalTable(tenantName, activeTenantObj) {
+    function renderHistoricalTable(tenantName) {
       const historyBody = document.getElementById("history-rows");
       historyBody.innerHTML = "";
 
-      if (payloadData && payloadData.history) {
-        payloadData.history.forEach(item => {
-          const tr = document.createElement("tr");
-          tr.className = "hover:bg-gray-950/50";
-          tr.innerHTML = `
-            <td class="p-2 font-medium text-white">${formatCycleLabel(item.cycle || payloadData.cycle)}</td>
-            <td class="p-2 font-mono">${item.consumed || item.units || 0}</td>
-            <td class="p-2 font-mono font-bold">₹${(item.amountDue || item.total || 0).toLocaleString()}</td>
-            <td class="p-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
-                item.status === 'paid' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'
-              }">${(item.status || 'PAID').toUpperCase()}</span>
-            </td>
-            <td class="p-2 font-mono text-gray-400">${item.paidDate || 'Paid'}</td>
-          `;
-          historyBody.appendChild(tr);
-        });
-        return;
-      }
+      const historyRecords = cloudBills.length > 0 
+        ? cloudBills.filter(b => b.name.toLowerCase() === tenantName.toLowerCase())
+        : allCycles.map(cKey => {
+            const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${cKey}`)) || [];
+            const r = cycleData.find(item => item.name.toLowerCase() === tenantName.toLowerCase());
+            return r ? { ...r, cycle: cKey } : null;
+          }).filter(Boolean);
 
-      allCycles.forEach(cycleKey => {
-        const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${cycleKey}`)) || [];
-        const record = cycleData.find(item => item.name.toLowerCase() === tenantName.toLowerCase());
+      historyRecords.forEach(record => {
+        const consumed = record.consumed !== undefined ? record.consumed : (record.currReading - record.prevReading);
+        const isOverdue = checkIsOverdue(record);
+        const fineAmount = isOverdue ? (record.fine || 50) : 0;
+        const total = record.amountDue + fineAmount;
+        const paidOn = record.paidDate ? record.paidDate : (record.status === 'paid' ? 'Paid' : '—');
 
-        if (record) {
-          const consumed = record.consumed !== undefined ? record.consumed : (record.currReading - record.prevReading);
-          const isOverdue = checkIsOverdue(record);
-          const fineAmount = isOverdue ? (record.fine || 50) : 0;
-          const total = record.amountDue + fineAmount;
-          const paidOn = record.paidDate ? record.paidDate : (record.status === 'paid' ? 'Paid' : '—');
-
-          const tr = document.createElement("tr");
-          tr.className = "hover:bg-gray-950/50";
-          tr.innerHTML = `
-            <td class="p-2 font-medium text-white">${formatCycleLabel(cycleKey)}</td>
-            <td class="p-2 font-mono">${consumed}</td>
-            <td class="p-2 font-mono font-bold">₹${total.toLocaleString()}</td>
-            <td class="p-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
-                record.status === 'paid' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'
-              }">${record.status.toUpperCase()}</span>
-            </td>
-            <td class="p-2 font-mono text-gray-400">${paidOn}</td>
-          `;
-          historyBody.appendChild(tr);
-        }
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-950/50";
+        tr.innerHTML = `
+          <td class="p-2 font-medium text-white">${formatCycleLabel(record.cycle)}</td>
+          <td class="p-2 font-mono">${consumed}</td>
+          <td class="p-2 font-mono font-bold">₹${total.toLocaleString()}</td>
+          <td class="p-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+              record.status === 'paid' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'
+            }">${record.status.toUpperCase()}</span>
+          </td>
+          <td class="p-2 font-mono text-gray-400">${paidOn}</td>
+        `;
+        historyBody.appendChild(tr);
       });
     }
 
@@ -346,14 +386,7 @@
     }
 
     // Startup
-    initCycles();
-    initTenantList();
-    currentSelectedTenant = getTargetTenant();
-    if (allCycles.length > 0) {
-      const startCycle = payloadData ? payloadData.cycle : allCycles[allCycles.length - 1];
-      document.getElementById("cycle-select").value = startCycle;
-      renderTenantData(startCycle);
-    }
+    loadTenantFromFirestore();
   </script>
 </body>
 </html>
