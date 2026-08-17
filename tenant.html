@@ -104,6 +104,45 @@
       </div>
     </div>
 
+    <!-- Live Dynamic UPI Payment & QR Code Section -->
+    <section id="upi-payment-section" class="bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-4 shadow-xl">
+      <div class="text-center space-y-1">
+        <h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center justify-center gap-1.5">
+          📲 Instant UPI Payment
+        </h3>
+        <p class="text-[11px] text-gray-400">Scan QR or tap below to pay directly</p>
+      </div>
+
+      <div class="flex flex-col items-center justify-center gap-3">
+        <!-- QR Container -->
+        <div class="p-3 bg-white rounded-2xl shadow-inner border border-gray-200">
+          <img id="upi-qr-image" src="" alt="UPI Payment QR" class="w-40 h-40 object-contain rounded-lg" />
+        </div>
+        
+        <div class="text-center space-y-0.5">
+          <p class="text-xs text-gray-300 font-mono font-bold">7499116099@kotak</p>
+          <p class="text-[10px] text-gray-500">Ali Market Electricity Billing</p>
+        </div>
+      </div>
+
+      <!-- One-Click Mobile Pay Button -->
+      <a 
+        id="upi-pay-button" 
+        href="#" 
+        class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-2">
+        <span>⚡ Pay ₹<span id="upi-button-amt">0</span> via Any UPI App</span>
+      </a>
+    </section>
+
+    <!-- Paid Confirmation Notice (Visible if Paid) -->
+    <section id="paid-badge-section" class="hidden bg-emerald-950/40 border border-emerald-800/60 rounded-2xl p-4 text-center space-y-1">
+      <div class="w-10 h-10 bg-emerald-600/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-lg font-bold">
+        ✓
+      </div>
+      <h4 class="text-sm font-bold text-emerald-400">Bill Settled & Verified</h4>
+      <p class="text-xs text-gray-400">No payment is pending for this billing cycle.</p>
+    </section>
+
     <!-- Download Bill Image -->
     <div class="text-center">
       <button onclick="downloadCard()" class="w-full bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2">
@@ -155,6 +194,9 @@
       measurementId: "G-D6VR0KQ6DJ"
     };
 
+    const MERCHANT_UPI_ID = "7499116099@kotak";
+    const MERCHANT_NAME = "Ali Market";
+
     let db = null;
     if (window.firebase) {
       try {
@@ -165,7 +207,7 @@
       }
     }
 
-    const ADMIN_MASTER_PIN = "2815";
+    const ADMIN_MASTER_PIN = "1234";
 
     function promptAdminLogin() {
       const pin = prompt("Enter Admin PIN to access dashboard:");
@@ -285,7 +327,7 @@
           if (uniqueCycles.length > 0) allCycles = uniqueCycles;
         }
       } catch (err) {
-        console.warn("Firestore fetch failed, using local storage:", err);
+        console.warn("Firestore fetch fallback:", err);
       }
 
       initCycles();
@@ -384,15 +426,38 @@
       document.getElementById("card-total").innerText = `₹${totalAmount.toLocaleString()}`;
 
       const badge = document.getElementById("card-badge");
+      const upiSection = document.getElementById("upi-payment-section");
+      const paidBadgeSection = document.getElementById("paid-badge-section");
+
       if (t.status === 'paid') {
         badge.innerText = "STATUS: PAID";
         badge.className = "bg-emerald-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black uppercase";
-      } else if (isOverdue) {
-        badge.innerText = "STATUS: OVERDUE";
-        badge.className = "bg-red-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black uppercase";
+        
+        // Hide UPI section and show settled notice
+        if (upiSection) upiSection.classList.add("hidden");
+        if (paidBadgeSection) paidBadgeSection.classList.remove("hidden");
       } else {
-        badge.innerText = "STATUS: PENDING";
-        badge.className = "bg-yellow-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black uppercase";
+        if (isOverdue) {
+          badge.innerText = "STATUS: OVERDUE";
+          badge.className = "bg-red-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black uppercase";
+        } else {
+          badge.innerText = "STATUS: PENDING";
+          badge.className = "bg-yellow-600 text-white px-4 py-1 rounded-l-full text-[11px] font-black uppercase";
+        }
+
+        // Show UPI section and configure dynamic links
+        if (upiSection) upiSection.classList.remove("hidden");
+        if (paidBadgeSection) paidBadgeSection.classList.add("hidden");
+
+        // Format UPI Intent URI & Quick QR Code URL
+        const note = encodeURIComponent(`PowerBill ${cycleFormatted} - ${t.name}`);
+        const upiUri = `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${totalAmount}&cu=INR&tn=${note}`;
+        
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=0&data=${encodeURIComponent(upiUri)}`;
+        
+        document.getElementById("upi-qr-image").src = qrUrl;
+        document.getElementById("upi-pay-button").href = upiUri;
+        document.getElementById("upi-button-amt").innerText = totalAmount.toLocaleString();
       }
 
       renderHistoricalTable(t.name);
@@ -453,3 +518,4 @@
   </script>
 </body>
 </html>
+ 
