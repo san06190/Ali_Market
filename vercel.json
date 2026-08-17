@@ -1,23 +1,13 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false,
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
         { "key": "X-XSS-Protection", "value": "1; mode=block" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
     }
-  ],
-  "routes": [
-    { "src": "^/tenant$", "dest": "/tenant.html" },
-    { "src": "^/tenant.html$", "dest": "/tenant.html" },
-    { "src": "^/1000167585.png$", "dest": "/1000167585.png" },
-    { "src": "^/index.html$", "dest": "/index.html" },
-    { "src": "^/$", "dest": "/index.html" },
-    { "src": "^/.*", "status": 404, "dest": "/index.html" }
   ]
 }
