@@ -976,6 +976,113 @@
         badge.innerText = "STATUS: PAID";
         badge.className = "bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
       } else if (isOverdue) {
+    function getTenantTrendHistory(tenantName) {
+      const historyList = [];
+      
+      // Sort cycles chronologically (e.g. 2026-03 -> 2026-08)
+      const sortedCycles = [...allCycles].sort();
+
+      sortedCycles.forEach(cycleKey => {
+        const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${cycleKey}`)) || [];
+        const match = cycleData.find(item => item.name.trim().toLowerCase() === tenantName.trim().toLowerCase());
+        
+        if (match) {
+          const monthLabel = new Date(cycleKey + "-01").toLocaleDateString("en-US", { month: "short" });
+          const units = match.consumed !== undefined ? match.consumed : Math.max(0, match.currReading - match.prevReading);
+          historyList.push({
+            month: monthLabel,
+            units: units
+          });
+        }
+      });
+
+      return historyList;
+    }
+
+    function updateChart(tenantName) {
+      const history = getTenantTrendHistory(tenantName);
+      const ctx = document.getElementById('usageChart').getContext('2d');
+      const labels = history.map(h => h.month);
+      const data = history.map(h => h.units);
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels.length ? labels : ['Current'],
+          datasets: [{
+            label: 'Units Consumed',
+            data: data.length ? data : [0],
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: '#ef4444',
+            pointBorderColor: '#ffffff',
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { 
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.parsed.y} Units Consumed`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } },
+            y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    function viewTenant(id) {
+      const t = tenants.find(item => item.id === id);
+      if (!t) return;
+
+      selectedTenantForShare = t;
+
+      const detailSec = document.getElementById("detail-section");
+      detailSec.classList.remove("hidden");
+      detailSec.scrollIntoView({ behavior: 'smooth' });
+
+      const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
+      const isOverdue = checkIsOverdue(t);
+      const baseAmount = t.amountDue;
+      const fineAmount = isOverdue ? (t.fine || 50) : 0;
+      const totalAmount = baseAmount + fineAmount;
+      const cycleFormatted = formatCycleLabel(currentCycle);
+
+      const [cYear, cMonth] = currentCycle.split("-");
+      const generatedDate = t.generatedDate || `10/${cMonth}/${cYear}`;
+      const paidDate = t.paidDate ? t.paidDate : (t.status === 'paid' ? 'Paid' : 'Not Paid Yet');
+
+      document.getElementById("card-name").innerText = t.name;
+      document.getElementById("card-cycle-label").innerText = cycleFormatted;
+      document.getElementById("card-gen-date").innerText = generatedDate;
+      document.getElementById("card-pay-date").innerText = paidDate;
+      document.getElementById("card-prev").innerText = t.prevReading;
+      document.getElementById("card-curr").innerText = t.currReading;
+      document.getElementById("card-consumed").innerText = consumed;
+      document.getElementById("card-due").innerText = t.dueDate;
+      document.getElementById("card-orig").innerText = `₹${baseAmount.toLocaleString()}`;
+      document.getElementById("card-fine").innerText = `₹${fineAmount}`;
+      document.getElementById("card-total").innerText = `₹${totalAmount.toLocaleString()}`;
+
+      const badge = document.getElementById("card-badge");
+      if (t.status === 'paid') {
+        badge.innerText = "STATUS: PAID";
+        badge.className = "bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
+      } else if (isOverdue) {
         badge.innerText = "STATUS: OVERDUE";
         badge.className = "bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black shadow-[0_0_10px_rgba(220,38,38,0.5)]";
       } else {
@@ -997,8 +1104,10 @@
         btnCall.classList.add('opacity-50', 'pointer-events-none');
       }
 
-      updateChart(t.history);
+      // Dynamically compiles trend across Mar, Apr, May, Jun, Jul, Aug
+      updateChart(t.name);
     }
+
     async function shareBillToWhatsApp() {
       if (!selectedTenantForShare) return;
       const t = selectedTenantForShare;
