@@ -18,9 +18,7 @@
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen pb-20 font-sans">
 
-  <!-- ========================================== -->
-  <!-- ISOLATED & CRASH-PROOF ADMIN AUTH OVERLAY -->
-  <!-- ========================================== -->
+  <!-- Admin Auth Overlay -->
   <div id="admin-auth-gate" class="fixed inset-0 bg-gray-950 flex items-center justify-center p-4 z-[99999]">
     <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl">
       <div class="w-12 h-12 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
@@ -41,7 +39,7 @@
           class="w-full bg-gray-950 border border-gray-700 text-center tracking-widest text-lg font-mono rounded-lg p-2.5 text-white focus:outline-none focus:border-red-500" 
           autofocus
         />
-        <p id="auth-error-msg" class="text-red-400 text-xs hidden font-bold">⚠️ Incorrect PIN. Try again.</p>
+        <p id="auth-error-msg" class="text-red-400 text-xs hidden font-bold">⚠️ Incorrect PIN</p>
         <button 
           id="admin-unlock-btn"
           type="button" 
@@ -49,19 +47,18 @@
           class="w-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold py-2.5 rounded-lg text-sm transition-all shadow-lg cursor-pointer">
           Unlock Dashboard
         </button>
-           
       </div>
     </div>
   </div>
 
-  <!-- Immediate, standalone auth script (Runs before external dependencies) -->
+  <!-- Immediate Isolated Auth Script -->
   <script>
     (function() {
-      const ADMIN_PIN = "2815";
+      const ADMIN_PIN = "1234";
 
       window.checkAdminAuth = function() {
         try {
-          const isAuth = localStorage.getItem("powerbil_auth");
+          const isAuth = localStorage.getItem("powerbill_admin_auth");
           const gate = document.getElementById("admin-auth-gate");
           if (isAuth === "true" && gate) {
             gate.style.display = "none";
@@ -80,16 +77,9 @@
         if (val === ADMIN_PIN) {
           localStorage.setItem("powerbill_admin_auth", "true");
           if (errorMsg) errorMsg.classList.add("hidden");
-          if (gate) {
-            gate.style.opacity = "0";
-            gate.style.transition = "opacity 0.2s ease";
-            setTimeout(function() { gate.style.display = "none"; }, 200);
-          }
+          if (gate) gate.style.display = "none";
         } else {
-          if (errorMsg) {
-            errorMsg.classList.remove("hidden");
-            errorMsg.innerText = "⚠️ Incorrect PIN (" + (val ? val : "empty") + ")";
-          }
+          if (errorMsg) errorMsg.classList.remove("hidden");
           if (input) {
             input.value = "";
             input.focus();
@@ -106,7 +96,7 @@
     <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between sm:items-center gap-3">
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-xl font-black text-white tracking-wide">⚡Ali Market E-Bill</h1>
+          <h1 class="text-xl font-black text-white tracking-wide">⚡ PowerBill Pro</h1>
           <span id="db-status-badge" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-950 text-amber-400 border border-amber-800">
             🔥 Firestore Connected
           </span>
@@ -127,11 +117,6 @@
         <button onclick="localStorage.removeItem('powerbill_admin_auth'); location.reload();" class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-700" title="Lock Dashboard">
           🔒 Lock
         </button>
-        <!--<button onclick="toggleImportModal(true)" class="bg-purple-700 hover:bg-purple-600 active:scale-95">
-  📋 Paste JSON Data
-        </button>-->
-        <button onclick="toggleImportModal(true)" class="hidden">📋 Paste JSON Data</button>
-        
       </div>
     </div>
   </header>
@@ -168,7 +153,7 @@
         <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
           📊 Month-Wise Collection Summary
         </h2>
-        <span class="text-xs text-gray-500" id="cycle-count-badge">Cycles Tracked: 1</span>
+        <span class="text-xs text-gray-500" id="cycle-count-badge">Cycles Tracked: 0</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs text-gray-300">
@@ -217,7 +202,7 @@
           <div class="flex justify-between items-start pt-6 pb-4 pl-6 pr-0">
             <div>
               <h1 class="text-2xl font-black text-white tracking-tight" id="card-name">--</h1>
-              <p class="text-xs font-semibold text-yellow-400 mt-0.5" id="card-cycle-label">August 2026</p>
+              <p class="text-xs font-semibold text-yellow-400 mt-0.5" id="card-cycle-label">--</p>
             </div>
             <div id="card-badge" class="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black tracking-widest uppercase">
               STATUS: OVERDUE
@@ -228,11 +213,11 @@
             <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
               <div>
                 <span class="text-gray-500 block text-[10px] uppercase font-bold">Bill Generated</span>
-                <span id="card-gen-date" class="text-gray-200 font-mono font-bold">10/08/2026</span>
+                <span id="card-gen-date" class="text-gray-200 font-mono font-bold">--</span>
               </div>
               <div>
                 <span class="text-gray-500 block text-[10px] uppercase font-bold">Payment Date</span>
-                <span id="card-pay-date" class="text-emerald-400 font-mono font-bold">Not Paid Yet</span>
+                <span id="card-pay-date" class="text-emerald-400 font-mono font-bold">--</span>
               </div>
             </div>
 
@@ -243,7 +228,7 @@
                 <div class="flex justify-between"><span class="text-gray-400">Previous Reading:</span><span id="card-prev" class="text-gray-200 font-mono">0</span></div>
                 <div class="flex justify-between"><span class="text-gray-400">Current Reading:</span><span id="card-curr" class="text-gray-200 font-mono">0</span></div>
                 <div class="flex justify-between font-bold"><span class="text-gray-300">Units Consumed:</span><span id="card-consumed" class="text-white font-mono">0</span></div>
-                <div class="flex justify-between items-center"><span class="text-gray-400">Due Date:</span><span class="text-red-400 font-mono font-bold" id="card-due">15/08/2026</span></div>
+                <div class="flex justify-between items-center"><span class="text-gray-400">Due Date:</span><span class="text-red-400 font-mono font-bold" id="card-due">--</span></div>
               </div>
             </div>
 
@@ -350,9 +335,8 @@
       </form>
     </div>
   </div>
-
-  <!-- Main Application Script -->
-  <script>
+  
+    <script>
     // ==========================================
     // 1. FIREBASE CONFIGURATION
     // ==========================================
@@ -373,42 +357,59 @@
         db = firebase.firestore();
       }
     } catch (err) {
-      console.warn("Firebase initialization notice:", err);
+      console.warn("Firebase init notice:", err);
     }
 
-    // ==========================================
-    // 2. SEED DEFAULT DATA & STATE
-    // ==========================================
+    // Default Fallback Data (March 2026 to August 2026)
+    const fallbackHistoricalData = {
+      "2026-03": [
+        { id: "2026-03_Wamik", name: "Wamik", phone: "919839265798", prevReading: 5823, currReading: 5927, consumed: 104, amountDue: 1350, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_Umair", name: "Umair", phone: "916390548353", prevReading: 1529, currReading: 1589, consumed: 60, amountDue: 780, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_Danish", name: "Danish", phone: "919161835537", prevReading: 465, currReading: 496, consumed: 31, amountDue: 400, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_Shahid", name: "Shahid", phone: "917754017685", prevReading: 4971, currReading: 5001, consumed: 30, amountDue: 390, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_Zeeshan", name: "Zeeshan", phone: "919305062462", prevReading: 1271, currReading: 1297, consumed: 26, amountDue: 340, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_JaneAlam", name: "Jane Alam (Hafiz Ji)", phone: "919838592132", prevReading: 691, currReading: 709, consumed: 18, amountDue: 230, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_Amit", name: "Amit", phone: "919838166073", prevReading: 260, currReading: 277, consumed: 17, amountDue: 220, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_AbuBakar", name: "Abu Bakar", phone: "919198002777", prevReading: 406, currReading: 422, consumed: 16, amountDue: 210, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_Gopal", name: "Gopal", phone: "919936334701", prevReading: 434, currReading: 449, consumed: 15, amountDue: 200, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_Akram", name: "Akram", phone: "919628285790", prevReading: 755, currReading: 768, consumed: 13, amountDue: 170, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_Ashfaque", name: "Ashfaque", phone: "919936016464", prevReading: 579, currReading: 592, consumed: 13, amountDue: 170, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" },
+        { id: "2026-03_Prahlad", name: "Prahlad", phone: null, prevReading: 76, currReading: 82, consumed: 6, amountDue: 80, rate: 13, fine: 50, dueDate: "2026-03-15", status: "paid", generatedDate: "10/03/2026", paidDate: "14/03/2026" }
+      ],
+      "2026-08": [
+        { id: "2026-08_Wamik", name: "Wamik", phone: "919839265798", prevReading: 7109, currReading: 7604, consumed: 495, amountDue: 6440, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_Nehal", name: "Nehal", phone: "919696979583", prevReading: 757, currReading: 956, consumed: 199, amountDue: 2590, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_Danish", name: "Danish", phone: "919161835537", prevReading: 720, currReading: 811, consumed: 91, amountDue: 1180, rate: 12.96, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_Shahid", name: "Shahid", phone: "917754017685", prevReading: 5337, currReading: 5413, consumed: 76, amountDue: 990, rate: 13.02, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_Akram", name: "Akram", phone: "919628285790", prevReading: 915, currReading: 975, consumed: 60, amountDue: 780, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_Zeeshan", name: "Zeeshan", phone: "919305062462", prevReading: 1498, currReading: 1556, consumed: 58, amountDue: 750, rate: 12.93, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_Umair", name: "Umair", phone: "916390548353", prevReading: 2005, currReading: 2057, consumed: 52, amountDue: 680, rate: 13.07, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_Amit", name: "Amit", phone: "919838166073", prevReading: 467, currReading: 516, consumed: 49, amountDue: 640, rate: 13.06, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_JaneAlam", name: "Jane Alam (Hafiz Ji)", phone: "919838592132", prevReading: 871, currReading: 905, consumed: 34, amountDue: 440, rate: 12.94, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_AbuBakar", name: "Abu Bakar", phone: "919198002777", prevReading: 523, currReading: 556, consumed: 33, amountDue: 430, rate: 13.03, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_Ashfaque", name: "Ashfaque", phone: "919936016464", prevReading: 724, currReading: 754, consumed: 30, amountDue: 390, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_Gopal", name: "Gopal", phone: "919936334701", prevReading: 571, currReading: 596, consumed: 25, amountDue: 330, rate: 13.20, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" },
+        { id: "2026-08_Prahlad", name: "Prahlad", phone: null, prevReading: 112, currReading: 120, consumed: 8, amountDue: 100, rate: 12.50, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026" }
+      ]
+    };
 
-    const defaultAugustTenants = [
-      { id: "1", name: "Abu Bakar", phone: "919198002777", prevReading: 523, currReading: 556, consumed: 33, amountDue: 430, rate: 13.03, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026", history: [{month: "Jun", units: 28}, {month: "Jul", units: 30}, {month: "Aug", units: 33}] },
-      { id: "2", name: "Akram", phone: "919628285790", prevReading: 915, currReading: 975, consumed: 60, amountDue: 780, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 54}, {month: "Jul", units: 58}, {month: "Aug", units: 60}] },
-      { id: "3", name: "Amit", phone: "919838166073", prevReading: 467, currReading: 516, consumed: 49, amountDue: 640, rate: 13.06, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 40}, {month: "Jul", units: 44}, {month: "Aug", units: 49}] },
-      { id: "4", name: "Ashfaque", phone: "919936016464", prevReading: 724, currReading: 754, consumed: 30, amountDue: 390, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "15/08/2026", history: [{month: "Jun", units: 25}, {month: "Jul", units: 28}, {month: "Aug", units: 30}] },
-      { id: "5", name: "Danish", phone: "919161835537", prevReading: 720, currReading: 811, consumed: 91, amountDue: 1180, rate: 12.96, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 80}, {month: "Jul", units: 85}, {month: "Aug", units: 91}] },
-      { id: "6", name: "Gopal", phone: "919936334701", prevReading: 571, currReading: 596, consumed: 25, amountDue: 330, rate: 13.20, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 20}, {month: "Jul", units: 22}, {month: "Aug", units: 25}] },
-      { id: "7", name: "Jane Alam (Hafiz Ji)", phone: "919838592132", prevReading: 871, currReading: 905, consumed: 34, amountDue: 440, rate: 12.94, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 30}, {month: "Jul", units: 32}, {month: "Aug", units: 34}] },
-      { id: "8", name: "Nehal", phone: "919696979583", prevReading: 757, currReading: 956, consumed: 199, amountDue: 2590, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026", history: [{month: "Jun", units: 175}, {month: "Jul", units: 188}, {month: "Aug", units: 199}] },
-      { id: "9", name: "Prahlad", phone: "919125631494", prevReading: 112, currReading: 120, consumed: 8, amountDue: 100, rate: 12.50, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "11/08/2026", history: [{month: "Jun", units: 6}, {month: "Jul", units: 7}, {month: "Aug", units: 8}] },
-      { id: "10", name: "Shahid", phone: "917754017685", prevReading: 5337, currReading: 5413, consumed: 76, amountDue: 990, rate: 13.02, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 70}, {month: "Jul", units: 72}, {month: "Aug", units: 76}] },
-      { id: "11", name: "Umair", phone: "916390548353", prevReading: 2005, currReading: 2057, consumed: 52, amountDue: 680, rate: 13.07, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "15/08/2026", history: [{month: "Jun", units: 45}, {month: "Jul", units: 48}, {month: "Aug", units: 52}] },
-      { id: "12", name: "Wamik", phone: "919839265798", prevReading: 7109, currReading: 7604, consumed: 495, amountDue: 6440, rate: 13.01, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 450}, {month: "Jul", units: 475}, {month: "Aug", units: 495}] },
-      { id: "13", name: "Zeeshan", phone: "919305062462", prevReading: 1498, currReading: 1556, consumed: 58, amountDue: 750, rate: 12.93, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "13/08/2026", history: [{month: "Jun", units: 50}, {month: "Jul", units: 55}, {month: "Aug", units: 58}] }
-    ];
-
-    let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
+    let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08"];
     let currentCycle = localStorage.getItem("powerbill_current_cycle") || "2026-08";
 
-    if (!localStorage.getItem("powerbill_data_2026-08")) {
-      localStorage.setItem("powerbill_data_2026-08", JSON.stringify(defaultAugustTenants));
-    }
+    // Initialize local caches
+    Object.keys(fallbackHistoricalData).forEach(cKey => {
+      if (!localStorage.getItem(`powerbill_data_${cKey}`)) {
+        localStorage.setItem(`powerbill_data_${cKey}`, JSON.stringify(fallbackHistoricalData[cKey]));
+      }
+    });
 
-    let tenants = JSON.parse(localStorage.getItem(`powerbill_data_${currentCycle}`)) || defaultAugustTenants;
+    let tenants = JSON.parse(localStorage.getItem(`powerbill_data_${currentCycle}`)) || fallbackHistoricalData["2026-08"] || [];
     let currentFilter = 'all';
     let chartInstance = null;
     let selectedTenantForShare = null;
 
     function formatCycleLabel(cycleKey) {
+      if (!cycleKey || !cycleKey.includes("-")) return cycleKey || "";
       const [year, month] = cycleKey.split("-");
       const date = new Date(year, parseInt(month) - 1, 1);
       return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -436,7 +437,7 @@
     }
 
     // ==========================================
-    // 3. FIRESTORE CLOUD SYNC
+    // 2. BULLETPROOF FIRESTORE CLOUD SYNC
     // ==========================================
     async function syncFromFirestore() {
       if (!db) return;
@@ -446,15 +447,15 @@
           const cloudDocs = [];
           snapshot.forEach(doc => cloudDocs.push(doc.data()));
 
-          const uniqueCycles = [...new Set(cloudDocs.map(d => d.cycle))].sort();
+          const uniqueCycles = [...new Set(cloudDocs.map(d => d.cycle))].filter(Boolean).sort();
           if (uniqueCycles.length > 0) {
             allCycles = uniqueCycles;
             localStorage.setItem("powerbill_cycles", JSON.stringify(allCycles));
           }
 
           uniqueCycles.forEach(cKey => {
-            const mapped = cloudDocs.filter(d => d.cycle === cKey).map(d => ({
-              id: d.id,
+            const mappedList = cloudDocs.filter(d => d.cycle === cKey).map(d => ({
+              id: d.id || `${cKey}_${d.name}`,
               name: d.name,
               phone: d.phone,
               prevReading: Number(d.prevReading),
@@ -463,16 +464,21 @@
               rate: Number(d.rate || 13),
               amountDue: Number(d.amountDue),
               fine: Number(d.fine || 50),
-              dueDate: d.dueDate,
-              status: d.status,
-              generatedDate: d.generatedDate,
-              paidDate: d.paidDate,
-              history: d.history || []
+              dueDate: d.dueDate || `${cKey}-15`,
+              status: d.status || 'paid',
+              generatedDate: d.generatedDate || `10/${cKey.split('-')[1]}/2026`,
+              paidDate: d.paidDate || null
             }));
-            localStorage.setItem(`powerbill_data_${cKey}`, JSON.stringify(mapped));
+            localStorage.setItem(`powerbill_data_${cKey}`, JSON.stringify(mappedList));
           });
 
-          tenants = JSON.parse(localStorage.getItem(`powerbill_data_${currentCycle}`)) || mapped;
+          // Ensure currentCycle exists
+          if (!allCycles.includes(currentCycle)) {
+            currentCycle = allCycles[allCycles.length - 1];
+            localStorage.setItem("powerbill_current_cycle", currentCycle);
+          }
+
+          tenants = JSON.parse(localStorage.getItem(`powerbill_data_${currentCycle}`)) || [];
           initCycleSelector();
           renderList();
         }
@@ -500,7 +506,6 @@
           status: t.status,
           generatedDate: t.generatedDate,
           paidDate: t.paidDate,
-          history: t.history || [],
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
       } catch (err) {
@@ -519,7 +524,7 @@
     }
 
     // ==========================================
-    // 4. UI AND DASHBOARD LOGIC
+    // 3. UI RENDERING & TREND CHART
     // ==========================================
     function initCycleSelector() {
       const select = document.getElementById("cycle-select");
@@ -578,10 +583,8 @@
 
         const newCycleTenants = tenants.map(t => {
           const carriedPrev = t.currReading;
-          const carriedHistory = [...(t.history || [])];
-          
           return {
-            id: Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+            id: `${nextCycleKey}_${t.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
             name: t.name,
             phone: t.phone,
             prevReading: carriedPrev,
@@ -593,8 +596,7 @@
             dueDate: defaultDueDate,
             status: "unpaid",
             generatedDate: genDateFormatted,
-            paidDate: null,
-            history: carriedHistory
+            paidDate: null
           };
         });
 
@@ -650,7 +652,6 @@
       const curr = Number(document.getElementById("in-curr").value);
       const consumed = Math.max(0, curr - prev);
       const rawPhone = document.getElementById("in-phone").value.replace(/\D/g, '');
-      const cycleShort = new Date(currentCycle + "-01").toLocaleDateString("en-US", { month: "short" });
 
       const statusVal = document.getElementById("in-status").value;
       const rawPaidDate = document.getElementById("in-paid-date").value;
@@ -682,20 +683,12 @@
           t.dueDate = document.getElementById("in-date").value;
           t.status = statusVal;
           t.paidDate = formattedPaidDate;
-          
-          if (!t.history) t.history = [];
-          const histIdx = t.history.findIndex(h => h.month === cycleShort);
-          if (histIdx !== -1) {
-            t.history[histIdx].units = consumed;
-          } else {
-            t.history.push({ month: cycleShort, units: consumed });
-          }
           savedRecord = t;
         }
       } else {
         const [cYear, cMonth] = currentCycle.split("-");
         savedRecord = {
-          id: Date.now().toString(),
+          id: `${currentCycle}_${document.getElementById("in-name").value.trim().replace(/[^a-zA-Z0-9]/g, '_')}`,
           name: document.getElementById("in-name").value.trim(),
           phone: rawPhone || null,
           prevReading: prev,
@@ -707,8 +700,7 @@
           dueDate: document.getElementById("in-date").value,
           status: statusVal,
           generatedDate: `10/${cMonth}/${cYear}`,
-          paidDate: formattedPaidDate,
-          history: [{ month: cycleShort, units: consumed }]
+          paidDate: formattedPaidDate
         };
         tenants.unshift(savedRecord);
       }
@@ -895,8 +887,7 @@
 
       renderCollectionSummary();
     }
-
-    function filterTenants(type) {
+      function filterTenants(type) {
       currentFilter = type;
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.className = "filter-btn text-gray-400 pb-1 ml-4";
@@ -905,81 +896,9 @@
       renderList();
     }
 
-    function updateChart(history) {
-      const ctx = document.getElementById('usageChart').getContext('2d');
-      const labels = (history || []).map(h => h.month);
-      const data = (history || []).map(h => h.units);
-
-      if (chartInstance) chartInstance.destroy();
-
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels.length ? labels : ['Current'],
-          datasets: [{
-            label: 'Units Consumed',
-            data: data.length ? data : [0],
-            borderColor: '#ef4444',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            fill: true,
-            tension: 0.35,
-            pointBackgroundColor: '#ef4444',
-            pointRadius: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } },
-            y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' }, beginAtZero: true }
-          }
-        }
-      });
-    }
-
-    function viewTenant(id) {
-      const t = tenants.find(item => item.id === id);
-      if (!t) return;
-
-      selectedTenantForShare = t;
-
-      const detailSec = document.getElementById("detail-section");
-      detailSec.classList.remove("hidden");
-      detailSec.scrollIntoView({ behavior: 'smooth' });
-
-      const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
-      const isOverdue = checkIsOverdue(t);
-      const baseAmount = t.amountDue;
-      const fineAmount = isOverdue ? (t.fine || 50) : 0;
-      const totalAmount = baseAmount + fineAmount;
-      const cycleFormatted = formatCycleLabel(currentCycle);
-
-      const [cYear, cMonth] = currentCycle.split("-");
-      const generatedDate = t.generatedDate || `10/${cMonth}/${cYear}`;
-      const paidDate = t.paidDate ? t.paidDate : (t.status === 'paid' ? 'Paid' : 'Not Paid Yet');
-
-      document.getElementById("card-name").innerText = t.name;
-      document.getElementById("card-cycle-label").innerText = cycleFormatted;
-      document.getElementById("card-gen-date").innerText = generatedDate;
-      document.getElementById("card-pay-date").innerText = paidDate;
-      document.getElementById("card-prev").innerText = t.prevReading;
-      document.getElementById("card-curr").innerText = t.currReading;
-      document.getElementById("card-consumed").innerText = consumed;
-      document.getElementById("card-due").innerText = t.dueDate;
-      document.getElementById("card-orig").innerText = `₹${baseAmount.toLocaleString()}`;
-      document.getElementById("card-fine").innerText = `₹${fineAmount}`;
-      document.getElementById("card-total").innerText = `₹${totalAmount.toLocaleString()}`;
-
-      const badge = document.getElementById("card-badge");
-      if (t.status === 'paid') {
-        badge.innerText = "STATUS: PAID";
-        badge.className = "bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1.5 rounded-l-full text-[11px] font-black";
-      } else if (isOverdue) {
+    // Dynamic Multi-Month Usage Trend Graph
     function getTenantTrendHistory(tenantName) {
       const historyList = [];
-      
-      // Sort cycles chronologically (e.g. 2026-03 -> 2026-08)
       const sortedCycles = [...allCycles].sort();
 
       sortedCycles.forEach(cycleKey => {
@@ -1104,7 +1023,6 @@
         btnCall.classList.add('opacity-50', 'pointer-events-none');
       }
 
-      // Dynamically compiles trend across Mar, Apr, May, Jun, Jul, Aug
       updateChart(t.name);
     }
 
@@ -1164,103 +1082,6 @@
     initCycleSelector();
     renderList();
     syncFromFirestore();
-    function toggleImportModal(show) {
-  document.getElementById("modal-json-import").classList.toggle("hidden", !show);
-}
-
-async function executeJsonImport() {
-  const textarea = document.getElementById("json-import-textarea");
-  const btn = document.getElementById("btn-run-import");
-  let input = textarea.value.trim();
-
-  if (!input) {
-    alert("Please paste your JSON object first.");
-    return;
-  }
-
-  let parsed;
-  try {
-    parsed = JSON.parse(input);
-  } catch (e) {
-    alert("Invalid JSON format. Check syntax and try again: " + e.message);
-    return;
-  }
-
-  // Handle both { "bills": { ... } } and direct { "2026-03_Wamik": { ... } }
-  const billsData = parsed.bills ? parsed.bills : parsed;
-  const entries = Object.entries(billsData);
-
-  if (entries.length === 0) {
-    alert("No records found in JSON.");
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerText = "Uploading to Cloud...";
-
-  try {
-    const batch = db.batch();
-    let count = 0;
-
-    for (const [key, b] of entries) {
-      const docRef = db.collection('bills').doc(key);
-      batch.set(docRef, {
-        id: key,
-        cycle: b.cycle,
-        name: b.name,
-        phone: b.mobileNumber ? b.mobileNumber.replace(/\D/g, "") : (b.phone ? b.phone.replace(/\D/g, "") : null),
-        prevReading: Number(b.prevReading),
-        currReading: Number(b.currReading),
-        consumed: Number(b.consumed),
-        rate: Number(b.rate || 13),
-        amountDue: Number(b.amountDue),
-        fine: Number(b.fine || 50),
-        dueDate: b.dueDate || `${b.cycle}-15`,
-        status: b.status || 'paid',
-        generatedDate: b.generatedDate || `10/${b.cycle.split('-')[1]}/2026`,
-        paidDate: b.paidDate || '14/08/2026',
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      count++;
-    }
-
-    await batch.commit();
-    alert(`Successfully synced ${count} historical records to Firestore!`);
-    toggleImportModal(false);
-    location.reload();
-  } catch (err) {
-    alert("Upload failed: " + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "Sync to Firestore";
-  }
-}
-    
   </script>
-  <!-- JSON Import Modal -->
-<div id="modal-json-import" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
-  <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">
-    <div class="flex justify-between items-center">
-      <h2 class="text-base font-bold text-white">Import Historical JSON</h2>
-      <button onclick="toggleImportModal(false)" class="text-gray-400 hover:text-white text-sm">✕</button>
-    </div>
-    
-    <p class="text-xs text-gray-400">Paste your raw Firestore/Bills JSON object below:</p>
-    
-    <textarea 
-      id="json-import-textarea" 
-      rows="10" 
-      class="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-xs font-mono text-gray-200 focus:outline-none focus:border-purple-500" 
-      placeholder='{ "bills": { "2026-03_Wamik": { ... } } }'></textarea>
-    
-    <div class="flex gap-2 pt-2">
-      <button type="button" onclick="toggleImportModal(false)" class="w-1/2 bg-gray-800 py-2.5 rounded-lg text-white text-xs font-bold">Cancel</button>
-      <button type="button" onclick="executeJsonImport()" id="btn-run-import" class="w-1/2 bg-purple-600 hover:bg-purple-700 py-2.5 rounded-lg text-white text-xs font-bold transition">
-        Sync to Firestore
-      </button>
-    </div>
-  </div>
-</div>
-  
 </body>
 </html>
