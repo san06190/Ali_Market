@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tenant Bill Portal - Ali Market</title>
-  <link rel="icon" type="image/png" href="icon.png" />
+  <link rel="icon" type="image/png" href="1000167585.png" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   
   <!-- Firebase App & Firestore SDKs -->
@@ -64,11 +65,11 @@
           <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
             <div>
               <span class="text-gray-500 block text-[10px] uppercase font-bold">Bill Generated</span>
-              <span id="card-gen-date" class="text-gray-200 font-mono font-bold">10/08/2026</span>
+              <span id="card-gen-date" class="text-gray-200 font-mono font-bold">--</span>
             </div>
             <div>
               <span class="text-gray-500 block text-[10px] uppercase font-bold">Payment Date</span>
-              <span id="card-pay-date" class="text-emerald-400 font-mono font-bold">Not Paid Yet</span>
+              <span id="card-pay-date" class="text-emerald-400 font-mono font-bold">--</span>
             </div>
           </div>
 
@@ -110,6 +111,14 @@
       </button>
     </div>
 
+    <!-- Usage Trend Graph -->
+    <section class="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
+      <h3 class="text-xs font-bold text-white uppercase tracking-wider">📈 6-Month Consumption Trend (Units)</h3>
+      <div class="bg-gray-950 p-3 rounded-xl border border-gray-800">
+        <canvas id="tenantTrendChart" height="150"></canvas>
+      </div>
+    </section>
+
     <!-- Live Historical Usage Table -->
     <section class="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
       <h3 class="text-xs font-bold text-white uppercase tracking-wider">📜 Your Payment & Usage History</h3>
@@ -134,7 +143,7 @@
 
   <script>
     // ==========================================
-    // 1. FIREBASE & ADMIN CONFIGURATION
+    // 1. FIREBASE CONFIGURATION
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyCDfINCUXckED7ruCuCsSOfjX9XVEDUA38",
@@ -156,24 +165,25 @@
       }
     }
 
-    const ADMIN_MASTER_PIN = "2815";
+    const ADMIN_MASTER_PIN = "1234";
 
-        function promptAdminLogin() {
+    function promptAdminLogin() {
       const pin = prompt("Enter Admin PIN to access dashboard:");
       if (pin === ADMIN_MASTER_PIN) {
-        localStorage.setItem("powerbill_admin_auth", "true"); // Stores auth before navigation
+        localStorage.setItem("powerbill_admin_auth", "true");
         window.location.href = "index.html";
       } else if (pin !== null) {
         alert("Incorrect PIN. Access restricted to Admin only.");
       }
     }
 
-
-    let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-08"];
+    let allCycles = JSON.parse(localStorage.getItem("powerbill_cycles")) || ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08"];
     let currentSelectedTenant = null;
     let cloudBills = [];
+    let tenantChartInstance = null;
 
     function formatCycleLabel(cycleKey) {
+      if (!cycleKey || !cycleKey.includes("-")) return cycleKey || "";
       const [year, month] = cycleKey.split("-");
       const date = new Date(year, parseInt(month) - 1, 1);
       return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -207,13 +217,13 @@
       const nameParam = params.get("tenant") || params.get("name");
       if (nameParam) return nameParam;
 
-      const activeCycle = document.getElementById("cycle-select").value || allCycles[0];
+      const activeCycle = document.getElementById("cycle-select").value || allCycles[allCycles.length - 1];
       const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${activeCycle}`)) || [];
-      return cycleData.length > 0 ? cycleData[0].name : "Danish";
+      return cycleData.length > 0 ? cycleData[0].name : "Wamik";
     }
 
     function initTenantList() {
-      const activeCycle = document.getElementById("cycle-select").value || allCycles[0];
+      const activeCycle = document.getElementById("cycle-select").value || allCycles[allCycles.length - 1];
       const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${activeCycle}`)) || [];
       const tenantSelect = document.getElementById("tenant-select");
       tenantSelect.innerHTML = "";
@@ -226,7 +236,7 @@
       });
 
       const params = new URLSearchParams(window.location.search);
-      if (!params.get("tenant") && !params.get("phone")) {
+      if (!params.get("tenant") && !params.get("name")) {
         document.getElementById("selector-box").classList.remove("hidden");
       }
     }
@@ -248,7 +258,7 @@
       }
 
       try {
-        const snapshot = await db.collection('bills').where('name', '==', targetName).get();
+        const snapshot = await db.collection('bills').get();
         if (!snapshot.empty) {
           cloudBills = [];
           snapshot.forEach(doc => {
@@ -271,7 +281,8 @@
             });
           });
 
-          allCycles = [...new Set(cloudBills.map(b => b.cycle))].sort();
+          const uniqueCycles = [...new Set(cloudBills.map(b => b.cycle))].filter(Boolean).sort();
+          if (uniqueCycles.length > 0) allCycles = uniqueCycles;
         }
       } catch (err) {
         console.warn("Firestore fetch failed, using local storage:", err);
@@ -283,6 +294,54 @@
         document.getElementById("cycle-select").value = allCycles[allCycles.length - 1];
         renderTenantData(document.getElementById("cycle-select").value);
       }
+    }
+
+    function renderTenantTrendChart(tenantName) {
+      const ctx = document.getElementById('tenantTrendChart').getContext('2d');
+      const sortedCycles = [...allCycles].sort();
+      const labels = [];
+      const dataPoints = [];
+
+      sortedCycles.forEach(cKey => {
+        let match = cloudBills.find(b => b.cycle === cKey && b.name.trim().toLowerCase() === tenantName.trim().toLowerCase());
+        if (!match) {
+          const localData = JSON.parse(localStorage.getItem(`powerbill_data_${cKey}`)) || [];
+          match = localData.find(b => b.name.trim().toLowerCase() === tenantName.trim().toLowerCase());
+        }
+        if (match) {
+          labels.push(new Date(cKey + "-01").toLocaleDateString("en-US", { month: "short" }));
+          dataPoints.push(match.consumed !== undefined ? match.consumed : Math.max(0, match.currReading - match.prevReading));
+        }
+      });
+
+      if (tenantChartInstance) tenantChartInstance.destroy();
+
+      tenantChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels.length ? labels : ['Current'],
+          datasets: [{
+            label: 'Units Consumed',
+            data: dataPoints.length ? dataPoints : [0],
+            borderColor: '#eab308',
+            backgroundColor: 'rgba(234, 179, 8, 0.15)',
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: '#eab308',
+            pointBorderColor: '#ffffff',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } },
+            y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' }, beginAtZero: true }
+          }
+        }
+      });
     }
 
     function renderTenantData(selectedCycle) {
@@ -337,45 +396,46 @@
       }
 
       renderHistoricalTable(t.name);
+      renderTenantTrendChart(t.name);
     }
 
     function renderHistoricalTable(tenantName) {
       const historyBody = document.getElementById("history-rows");
       historyBody.innerHTML = "";
 
-      const historyRecords = cloudBills.length > 0 
-        ? cloudBills.filter(b => b.name.toLowerCase() === tenantName.toLowerCase())
-        : allCycles.map(cKey => {
-            const cycleData = JSON.parse(localStorage.getItem(`powerbill_data_${cKey}`)) || [];
-            const r = cycleData.find(item => item.name.toLowerCase() === tenantName.toLowerCase());
-            return r ? { ...r, cycle: cKey } : null;
-          }).filter(Boolean);
+      const sortedCycles = [...allCycles].sort();
+      sortedCycles.forEach(cKey => {
+        let record = cloudBills.find(b => b.cycle === cKey && b.name.toLowerCase() === tenantName.toLowerCase());
+        if (!record) {
+          const localData = JSON.parse(localStorage.getItem(`powerbill_data_${cKey}`)) || [];
+          record = localData.find(item => item.name.toLowerCase() === tenantName.toLowerCase());
+        }
 
-      historyRecords.forEach(record => {
-        const consumed = record.consumed !== undefined ? record.consumed : (record.currReading - record.prevReading);
-        const isOverdue = checkIsOverdue(record);
-        const fineAmount = isOverdue ? (record.fine || 50) : 0;
-        const total = record.amountDue + fineAmount;
-        const paidOn = record.paidDate ? record.paidDate : (record.status === 'paid' ? 'Paid' : '—');
+        if (record) {
+          const consumed = record.consumed !== undefined ? record.consumed : (record.currReading - record.prevReading);
+          const isOverdue = checkIsOverdue(record);
+          const fineAmount = isOverdue ? (record.fine || 50) : 0;
+          const total = record.amountDue + fineAmount;
+          const paidOn = record.paidDate ? record.paidDate : (record.status === 'paid' ? 'Paid' : '—');
 
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-gray-950/50";
-        tr.innerHTML = `
-          <td class="p-2 font-medium text-white">${formatCycleLabel(record.cycle)}</td>
-          <td class="p-2 font-mono">${consumed}</td>
-          <td class="p-2 font-mono font-bold">₹${total.toLocaleString()}</td>
-          <td class="p-2">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
-              record.status === 'paid' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'
-            }">${record.status.toUpperCase()}</span>
-          </td>
-          <td class="p-2 font-mono text-gray-400">${paidOn}</td>
-        `;
-        historyBody.appendChild(tr);
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-gray-950/50";
+          tr.innerHTML = `
+            <td class="p-2 font-medium text-white">${formatCycleLabel(cKey)}</td>
+            <td class="p-2 font-mono">${consumed}</td>
+            <td class="p-2 font-mono font-bold">₹${total.toLocaleString()}</td>
+            <td class="p-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+                record.status === 'paid' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'
+              }">${record.status.toUpperCase()}</span>
+            </td>
+            <td class="p-2 font-mono text-gray-400">${paidOn}</td>
+          `;
+          historyBody.appendChild(tr);
+        }
       });
     }
-
-    function downloadCard() {
+function downloadCard() {
       const card = document.getElementById("bill-card");
       html2canvas(card, { backgroundColor: '#111111', scale: 2 }).then(canvas => {
         const link = document.createElement("a");
@@ -392,3 +452,4 @@
   </script>
 </body>
 </html>
+    
