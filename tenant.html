@@ -435,7 +435,8 @@
         }
       });
     }
-function downloadCard() {
+
+    function downloadCard() {
       const card = document.getElementById("bill-card");
       html2canvas(card, { backgroundColor: '#111111', scale: 2 }).then(canvas => {
         const link = document.createElement("a");
@@ -452,4 +453,3 @@ function downloadCard() {
   </script>
 </body>
 </html>
-    
