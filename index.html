@@ -49,6 +49,7 @@
           class="w-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold py-2.5 rounded-lg text-sm transition-all shadow-lg cursor-pointer">
           Unlock Dashboard
         </button>
+           
       </div>
     </div>
   </div>
@@ -60,7 +61,7 @@
 
       window.checkAdminAuth = function() {
         try {
-          const isAuth = localStorage.getItem("powerbill_admin_auth");
+          const isAuth = localStorage.getItem("powerbil_auth");
           const gate = document.getElementById("admin-auth-gate");
           if (isAuth === "true" && gate) {
             gate.style.display = "none";
@@ -126,6 +127,10 @@
         <button onclick="localStorage.removeItem('powerbill_admin_auth'); location.reload();" class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-2.5 py-2 rounded-lg font-bold border border-gray-700" title="Lock Dashboard">
           🔒 Lock
         </button>
+        <button onclick="toggleImportModal(true)" class="bg-purple-700 hover:bg-purple-600 active:scale-95 text-white text-xs px-3 py-2 rounded-lg font-bold transition shadow-md">
+  📋 Paste JSON Data
+        </button>
+        
       </div>
     </div>
   </header>
@@ -1049,6 +1054,103 @@
     initCycleSelector();
     renderList();
     syncFromFirestore();
+    function toggleImportModal(show) {
+  document.getElementById("modal-json-import").classList.toggle("hidden", !show);
+}
+
+async function executeJsonImport() {
+  const textarea = document.getElementById("json-import-textarea");
+  const btn = document.getElementById("btn-run-import");
+  let input = textarea.value.trim();
+
+  if (!input) {
+    alert("Please paste your JSON object first.");
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(input);
+  } catch (e) {
+    alert("Invalid JSON format. Check syntax and try again: " + e.message);
+    return;
+  }
+
+  // Handle both { "bills": { ... } } and direct { "2026-03_Wamik": { ... } }
+  const billsData = parsed.bills ? parsed.bills : parsed;
+  const entries = Object.entries(billsData);
+
+  if (entries.length === 0) {
+    alert("No records found in JSON.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "Uploading to Cloud...";
+
+  try {
+    const batch = db.batch();
+    let count = 0;
+
+    for (const [key, b] of entries) {
+      const docRef = db.collection('bills').doc(key);
+      batch.set(docRef, {
+        id: key,
+        cycle: b.cycle,
+        name: b.name,
+        phone: b.mobileNumber ? b.mobileNumber.replace(/\D/g, "") : (b.phone ? b.phone.replace(/\D/g, "") : null),
+        prevReading: Number(b.prevReading),
+        currReading: Number(b.currReading),
+        consumed: Number(b.consumed),
+        rate: Number(b.rate || 13),
+        amountDue: Number(b.amountDue),
+        fine: Number(b.fine || 50),
+        dueDate: b.dueDate || `${b.cycle}-15`,
+        status: b.status || 'paid',
+        generatedDate: b.generatedDate || `10/${b.cycle.split('-')[1]}/2026`,
+        paidDate: b.paidDate || '14/08/2026',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      count++;
+    }
+
+    await batch.commit();
+    alert(`Successfully synced ${count} historical records to Firestore!`);
+    toggleImportModal(false);
+    location.reload();
+  } catch (err) {
+    alert("Upload failed: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Sync to Firestore";
+  }
+}
+    
   </script>
+  <!-- JSON Import Modal -->
+<div id="modal-json-import" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+  <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center">
+      <h2 class="text-base font-bold text-white">Import Historical JSON</h2>
+      <button onclick="toggleImportModal(false)" class="text-gray-400 hover:text-white text-sm">✕</button>
+    </div>
+    
+    <p class="text-xs text-gray-400">Paste your raw Firestore/Bills JSON object below:</p>
+    
+    <textarea 
+      id="json-import-textarea" 
+      rows="10" 
+      class="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-xs font-mono text-gray-200 focus:outline-none focus:border-purple-500" 
+      placeholder='{ "bills": { "2026-03_Wamik": { ... } } }'></textarea>
+    
+    <div class="flex gap-2 pt-2">
+      <button type="button" onclick="toggleImportModal(false)" class="w-1/2 bg-gray-800 py-2.5 rounded-lg text-white text-xs font-bold">Cancel</button>
+      <button type="button" onclick="executeJsonImport()" id="btn-run-import" class="w-1/2 bg-purple-600 hover:bg-purple-700 py-2.5 rounded-lg text-white text-xs font-bold transition">
+        Sync to Firestore
+      </button>
+    </div>
+  </div>
+</div>
+  
 </body>
 </html>
