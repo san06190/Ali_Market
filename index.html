@@ -3,48 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tenant Electricity Manager</title>
+  <title>Tenant Electricity Manager - PowerBill Pro</title>
+  
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="icon.png" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <!-- Firebase App & Firestore SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen pb-20 font-sans">
-<!-- Admin Auth Overlay -->
-<div id="admin-auth-gate" class="fixed inset-0 bg-gray-950 flex items-center justify-center p-4 z-[9999]">
-  <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl">
-    <div class="w-12 h-12 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
-      🔒
+
+  <!-- Admin Auth Overlay -->
+  <div id="admin-auth-gate" class="fixed inset-0 bg-gray-950 flex items-center justify-center p-4 z-[9999]">
+    <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl">
+      <div class="w-12 h-12 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
+        🔒
+      </div>
+      <div>
+        <h2 class="text-base font-black text-white">Admin Authentication</h2>
+        <p class="text-xs text-gray-400 mt-1">Enter PIN to access PowerBill Pro</p>
+      </div>
+      <form onsubmit="verifyAdminPin(event)" class="space-y-3">
+        <input 
+          id="admin-pin-input" 
+          type="password" 
+          maxlength="8" 
+          placeholder="Enter PIN" 
+          class="w-full bg-gray-950 border border-gray-700 text-center tracking-widest text-lg font-mono rounded-lg p-2.5 text-white focus:outline-none focus:border-red-500" 
+          required 
+          autofocus
+        />
+        <p id="auth-error-msg" class="text-red-400 text-xs hidden font-medium">Incorrect PIN</p>
+        <button 
+          type="submit" 
+          class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
+          Unlock Dashboard
+        </button>
+      </form>
     </div>
-    <div>
-      <h2 class="text-base font-black text-white">Admin Authentication</h2>
-      <p class="text-xs text-gray-400 mt-1">Enter PIN to access PowerBill Pro</p>
-    </div>
-    <form onsubmit="verifyAdminPin(event)" class="space-y-3">
-      <input 
-        id="admin-pin-input" 
-        type="password" 
-        maxlength="8" 
-        placeholder="Enter PIN" 
-        class="w-full bg-gray-950 border border-gray-700 text-center tracking-widest text-lg font-mono rounded-lg p-2.5 text-white focus:outline-none focus:border-red-500" 
-        required 
-        autofocus
-      />
-      <p id="auth-error-msg" class="text-red-400 text-xs hidden font-medium">Incorrect PIN</p>
-      <button 
-        type="submit" 
-        class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
-        Unlock Dashboard
-      </button>
-    </form>
   </div>
-</div>
 
   <!-- Header -->
   <header class="bg-gray-900 border-b border-gray-800 p-4 sticky top-0 z-20 shadow-lg">
     <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between sm:items-center gap-3">
       <div>
-        <h1 class="text-xl font-black text-white tracking-wide">⚡Ali Market E-Bill</h1>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-black text-white tracking-wide">⚡Ali Market E-Bill</h1>
+          <span id="db-status-badge" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-950 text-amber-400 border border-amber-800">
+            🔥 Firestore Connected
+          </span>
+        </div>
         <div class="flex items-center gap-2 mt-1">
           <label class="text-xs text-gray-400">Billing Cycle:</label>
           <select id="cycle-select" onchange="switchCycle(this.value)" class="bg-gray-950 border border-gray-700 text-red-400 font-bold text-xs rounded-lg px-2 py-1 focus:ring-1 focus:ring-red-500">
@@ -64,7 +77,7 @@
 
   <main class="max-w-4xl mx-auto p-4 space-y-6">
 
-    <!-- Stats Summary -->
+    <!-- Overall Collection & Stats Summary -->
     <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <div class="bg-gray-900 border border-gray-800 p-3 sm:p-4 rounded-xl text-center">
         <p class="text-[10px] sm:text-xs text-gray-400 font-bold uppercase">Total Billed</p>
@@ -88,7 +101,7 @@
       </div>
     </section>
 
-    <!-- Month Summary Table -->
+    <!-- Month-Wise Historical Summary Card -->
     <section class="bg-gray-900 border border-gray-800 rounded-2xl p-4 sm:p-5 space-y-3">
       <div class="flex justify-between items-center">
         <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -126,7 +139,7 @@
     <section id="tenant-list" class="space-y-3">
     </section>
 
-    <!-- Bill Detail & Image Card -->
+    <!-- Detail View & Dark Bill Card Preview -->
     <section id="detail-section" class="hidden bg-gray-900 border border-gray-800 rounded-2xl p-4 sm:p-6 space-y-6">
       <div class="flex justify-between items-center">
         <h2 class="text-lg font-bold text-white">Bill Summary & Graph</h2>
@@ -182,7 +195,7 @@
               </div>
               <div class="bg-gradient-to-r from-red-950 via-red-900 to-red-950 border border-red-500/30 rounded-xl p-3 flex justify-between items-center shadow-[0_0_15px_rgba(220,38,38,0.2)]">
                  <span class="text-red-400 font-bold uppercase text-xs">Total Amount:</span> 
-                 <span class="text-red-400 font-black text-2xl font-mono" id="card-total">₹0</span>
+                 <span id="card-total" class="text-red-400 font-black text-2xl font-mono">₹0</span>
               </div>
             </div>
 
@@ -209,19 +222,20 @@
     </section>
   </main>
 
-  <!-- Edit/Add Modal -->
+  <!-- Add / Edit Modal -->
   <div id="modal-new" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
       <h2 id="modal-title" class="text-lg font-bold text-white">Add Tenant Bill</h2>
+      
       <form id="bill-form" onsubmit="handleFormSubmit(event)" class="space-y-3 text-sm">
         <input type="hidden" id="edit-id">
         <div>
           <label class="text-gray-400 block mb-1">Tenant Name</label>
-          <input required id="in-name" type="text" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
+          <input required id="in-name" type="text" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="e.g. Danish">
         </div>
         <div>
           <label class="text-gray-400 block mb-1">Phone Number</label>
-          <input id="in-phone" type="tel" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
+          <input id="in-phone" type="tel" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white" placeholder="919161835537">
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
@@ -253,6 +267,7 @@
             <input required id="in-date" type="date" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-white">
           </div>
         </div>
+
         <div class="grid grid-cols-2 gap-2 bg-gray-950 p-2.5 rounded-lg border border-gray-800">
           <div>
             <label class="text-gray-400 block mb-1">Payment Status</label>
@@ -266,6 +281,7 @@
             <input id="in-paid-date" type="date" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-white">
           </div>
         </div>
+
         <div class="flex gap-2 pt-2">
           <button type="button" onclick="toggleModal(false)" class="w-1/2 bg-gray-800 py-2.5 rounded-lg text-white font-bold">Cancel</button>
           <button type="submit" class="w-1/2 bg-red-600 hover:bg-red-700 py-2.5 rounded-lg text-white font-bold">Save Record</button>
@@ -273,38 +289,65 @@
       </form>
     </div>
   </div>
-    <script>
-      // Admin PIN Configuration
-const ADMIN_MASTER_PIN = "2815"; // <-- Change your admin PIN here
 
-function checkAdminAuth() {
-  const isAuth = sessionStorage.getItem("powerbill_admin_auth");
-  const gate = document.getElementById("admin-auth-gate");
-  if (isAuth === "true") {
-    if (gate) gate.classList.add("hidden");
-  } else {
-    if (gate) gate.classList.remove("hidden");
-  }
-}
+  <script>
+    // ==========================================
+    // 1. FIREBASE & ADMIN CONFIGURATION
+    // ==========================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyCDfINCUXckED7ruCuCsSOfjX9XVEDUA38",
+      authDomain: "ali-market-powerbill.firebaseapp.com",
+      projectId: "ali-market-powerbill",
+      storageBucket: "ali-market-powerbill.firebasestorage.app",
+      messagingSenderId: "712536072057",
+      appId: "1:712536072057:web:8a540cedcfd1ec338f19a8",
+      measurementId: "G-D6VR0KQ6DJ"
+    };
 
-function verifyAdminPin(e) {
-  e.preventDefault();
-  const inputPin = document.getElementById("admin-pin-input").value;
-  const errorMsg = document.getElementById("auth-error-msg");
+    let db = null;
+    if (window.firebase) {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+      } catch (err) {
+        console.warn("Firebase init failed:", err);
+      }
+    }
 
-  if (inputPin === ADMIN_MASTER_PIN) {
-    sessionStorage.setItem("powerbill_admin_auth", "true");
-    document.getElementById("admin-auth-gate").classList.add("hidden");
-    errorMsg.classList.add("hidden");
-  } else {
-    errorMsg.classList.remove("hidden");
-    document.getElementById("admin-pin-input").value = "";
-  }
-}
+    const ADMIN_MASTER_PIN = "2815";
 
-// Run authentication check on load
-checkAdminAuth();
-      
+    // ==========================================
+    // 2. ADMIN AUTHENTICATION
+    // ==========================================
+    function checkAdminAuth() {
+      const isAuth = sessionStorage.getItem("powerbill_admin_auth");
+      const gate = document.getElementById("admin-auth-gate");
+      if (isAuth === "true") {
+        if (gate) gate.classList.add("hidden");
+      } else {
+        if (gate) gate.classList.remove("hidden");
+      }
+    }
+
+    function verifyAdminPin(e) {
+      e.preventDefault();
+      const inputPin = document.getElementById("admin-pin-input").value;
+      const errorMsg = document.getElementById("auth-error-msg");
+
+      if (inputPin === ADMIN_MASTER_PIN) {
+        sessionStorage.setItem("powerbill_admin_auth", "true");
+        document.getElementById("admin-auth-gate").classList.add("hidden");
+        errorMsg.classList.add("hidden");
+      } else {
+        errorMsg.classList.remove("hidden");
+        document.getElementById("admin-pin-input").value = "";
+      }
+    }
+    checkAdminAuth();
+
+    // ==========================================
+    // 3. SEED DEFAULT DATA & STATE
+    // ==========================================
     const defaultAugustTenants = [
       { id: "1", name: "Abu Bakar", phone: "919198002777", prevReading: 523, currReading: 556, consumed: 33, amountDue: 430, rate: 13.03, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "14/08/2026", history: [{month: "Jun", units: 28}, {month: "Jul", units: 30}, {month: "Aug", units: 33}] },
       { id: "2", name: "Akram", phone: "919628285790", prevReading: 915, currReading: 975, consumed: 60, amountDue: 780, rate: 13.00, fine: 50, dueDate: "2026-08-15", status: "paid", generatedDate: "10/08/2026", paidDate: "12/08/2026", history: [{month: "Jun", units: 54}, {month: "Jul", units: 58}, {month: "Aug", units: 60}] },
@@ -360,6 +403,92 @@ checkAdminAuth();
       }
     }
 
+    // ==========================================
+    // 4. FIRESTORE SYNC LOGIC
+    // ==========================================
+    async function syncFromFirestore() {
+      if (!db) return;
+      try {
+        const snapshot = await db.collection('bills').get();
+        if (!snapshot.empty) {
+          const cloudDocs = [];
+          snapshot.forEach(doc => cloudDocs.push(doc.data()));
+
+          const uniqueCycles = [...new Set(cloudDocs.map(d => d.cycle))].sort();
+          if (uniqueCycles.length > 0) {
+            allCycles = uniqueCycles;
+            localStorage.setItem("powerbill_cycles", JSON.stringify(allCycles));
+          }
+
+          uniqueCycles.forEach(cKey => {
+            const mapped = cloudDocs.filter(d => d.cycle === cKey).map(d => ({
+              id: d.id,
+              name: d.name,
+              phone: d.phone,
+              prevReading: Number(d.prevReading),
+              currReading: Number(d.currReading),
+              consumed: Number(d.consumed),
+              rate: Number(d.rate || 13),
+              amountDue: Number(d.amountDue),
+              fine: Number(d.fine || 50),
+              dueDate: d.dueDate,
+              status: d.status,
+              generatedDate: d.generatedDate,
+              paidDate: d.paidDate,
+              history: d.history || []
+            }));
+            localStorage.setItem(`powerbill_data_${cKey}`, JSON.stringify(mapped));
+          });
+
+          tenants = JSON.parse(localStorage.getItem(`powerbill_data_${currentCycle}`)) || mapped;
+          initCycleSelector();
+          renderList();
+        }
+      } catch (err) {
+        console.warn("Firestore fetch failed, fallback to local storage:", err);
+      }
+    }
+
+    async function pushRecordToFirestore(t, cycleKey) {
+      if (!db) return;
+      try {
+        const docId = `${cycleKey}_${t.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        await db.collection('bills').doc(docId).set({
+          id: t.id,
+          cycle: cycleKey,
+          name: t.name,
+          phone: t.phone,
+          prevReading: t.prevReading,
+          currReading: t.currReading,
+          consumed: t.consumed,
+          rate: t.rate,
+          amountDue: t.amountDue,
+          fine: t.fine,
+          dueDate: t.dueDate,
+          status: t.status,
+          generatedDate: t.generatedDate,
+          paidDate: t.paidDate,
+          history: t.history || [],
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      } catch (err) {
+        console.error("Firestore write failed:", err);
+      }
+    }
+
+    async function deleteRecordFromFirestore(name, cycleKey) {
+      if (!db) return;
+      try {
+        const docId = `${cycleKey}_${name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        await db.collection('bills').doc(docId).delete();
+      } catch (err) {
+        console.error("Firestore delete failed:", err);
+      }
+    }
+
+    // ==========================================
+    // 5. APPLICATION UI LOGIC
+    // ==========================================
     function initCycleSelector() {
       const select = document.getElementById("cycle-select");
       select.innerHTML = "";
@@ -411,26 +540,31 @@ checkAdminAuth();
       const nextCycleKey = `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
       const nextCycleName = formatCycleLabel(nextCycleKey);
 
-      if (confirm(`Do you want to create a new billing cycle for "${nextCycleName}"?`)) {
+      if (confirm(`Do you want to create a new billing cycle for "${nextCycleName}"?\n\n• Each tenant's current reading becomes their previous reading.\n• Status resets to Unpaid.`)) {
         const defaultDueDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-15`;
         const genDateFormatted = `10/${String(nextMonth).padStart(2, '0')}/${nextYear}`;
 
-        const newCycleTenants = tenants.map(t => ({
-          id: Date.now() + "_" + Math.random().toString(36).substr(2, 5),
-          name: t.name,
-          phone: t.phone,
-          prevReading: t.currReading,
-          currReading: t.currReading,
-          consumed: 0,
-          rate: t.rate || 13,
-          amountDue: 0,
-          fine: t.fine || 50,
-          dueDate: defaultDueDate,
-          status: "unpaid",
-          generatedDate: genDateFormatted,
-          paidDate: null,
-          history: [...(t.history || [])]
-        }));
+        const newCycleTenants = tenants.map(t => {
+          const carriedPrev = t.currReading;
+          const carriedHistory = [...(t.history || [])];
+          
+          return {
+            id: Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+            name: t.name,
+            phone: t.phone,
+            prevReading: carriedPrev,
+            currReading: carriedPrev,
+            consumed: 0,
+            rate: t.rate || 13,
+            amountDue: 0,
+            fine: t.fine || 50,
+            dueDate: defaultDueDate,
+            status: "unpaid",
+            generatedDate: genDateFormatted,
+            paidDate: null,
+            history: carriedHistory
+          };
+        });
 
         currentCycle = nextCycleKey;
         if (!allCycles.includes(nextCycleKey)) {
@@ -441,13 +575,13 @@ checkAdminAuth();
         localStorage.setItem(`powerbill_data_${currentCycle}`, JSON.stringify(newCycleTenants));
         
         tenants = newCycleTenants;
+        tenants.forEach(t => pushRecordToFirestore(t, currentCycle));
+
         initCycleSelector();
         renderList();
         closeDetails();
       }
-    }
-
-    function openEditModal(id) {
+  function openEditModal(id) {
       const t = tenants.find(item => item.id === id);
       if (!t) return;
 
@@ -497,6 +631,8 @@ checkAdminAuth();
         }
       }
 
+      let savedRecord = null;
+
       if (editId) {
         const tenantIndex = tenants.findIndex(t => t.id === editId);
         if (tenantIndex !== -1) {
@@ -520,10 +656,11 @@ checkAdminAuth();
           } else {
             t.history.push({ month: cycleShort, units: consumed });
           }
+          savedRecord = t;
         }
       } else {
         const [cYear, cMonth] = currentCycle.split("-");
-        const newRecord = {
+        savedRecord = {
           id: Date.now().toString(),
           name: document.getElementById("in-name").value.trim(),
           phone: rawPhone || null,
@@ -539,8 +676,10 @@ checkAdminAuth();
           paidDate: formattedPaidDate,
           history: [{ month: cycleShort, units: consumed }]
         };
-        tenants.unshift(newRecord);
+        tenants.unshift(savedRecord);
       }
+
+      if (savedRecord) pushRecordToFirestore(savedRecord, currentCycle);
 
       saveState();
       document.getElementById("bill-form").reset();
@@ -561,6 +700,7 @@ checkAdminAuth();
         } else {
           tenant.paidDate = null;
         }
+        pushRecordToFirestore(tenant, currentCycle);
         saveState();
         if (selectedTenantForShare && selectedTenantForShare.id === id) {
           viewTenant(id);
@@ -571,6 +711,7 @@ checkAdminAuth();
     function deleteTenant(id, name) {
       if (confirm(`Delete bill record for "${name}" from ${formatCycleLabel(currentCycle)}?`)) {
         tenants = tenants.filter(t => t.id !== id);
+        deleteRecordFromFirestore(name, currentCycle);
         saveState();
         closeDetails();
       }
@@ -717,8 +858,7 @@ checkAdminAuth();
         `;
         listEl.appendChild(card);
       });
-
-      renderCollectionSummary();
+       renderCollectionSummary();
     }
 
     function filterTenants(type) {
@@ -826,69 +966,45 @@ checkAdminAuth();
     }
 
     async function shareBillToWhatsApp() {
-  if (!selectedTenantForShare) return;
-  const t = selectedTenantForShare;
-  const card = document.getElementById("bill-card");
-  const cleanPhone = t.phone ? t.phone.replace(/\D/g, '') : '';
-  const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
-  const isOverdue = checkIsOverdue(t);
-  const fineAmount = isOverdue ? (t.fine || 50) : 0;
-  const totalAmount = t.amountDue + fineAmount;
-  const cycleFormatted = formatCycleLabel(currentCycle);
+      if (!selectedTenantForShare) return;
+      const t = selectedTenantForShare;
+      const card = document.getElementById("bill-card");
+      const cleanPhone = t.phone ? t.phone.replace(/\D/g, '') : '';
+      const consumed = t.consumed !== undefined ? t.consumed : (t.currReading - t.prevReading);
+      const isOverdue = checkIsOverdue(t);
+      const fineAmount = isOverdue ? (t.fine || 50) : 0;
+      const totalAmount = t.amountDue + fineAmount;
+      const cycleFormatted = formatCycleLabel(currentCycle);
 
-  const [cYear, cMonth] = currentCycle.split("-");
-  const genDate = t.generatedDate || `10/${cMonth}/${cYear}`;
+      const [cYear, cMonth] = currentCycle.split("-");
+      const genDate = t.generatedDate || `10/${cMonth}/${cYear}`;
 
-  // Package all tenant details and cross-cycle history into URL payload
-  const historySummary = [];
-  allCycles.forEach(c => {
-    const cData = JSON.parse(localStorage.getItem(`powerbill_data_${c}`)) || [];
-    const rec = cData.find(item => item.name.toLowerCase() === t.name.toLowerCase());
-    if (rec) {
-      historySummary.push({
-        cycle: c,
-        consumed: rec.consumed !== undefined ? rec.consumed : (rec.currReading - rec.prevReading),
-        amountDue: rec.amountDue + (checkIsOverdue(rec) ? (rec.fine || 50) : 0),
-        status: rec.status,
-        paidDate: rec.paidDate
-      });
+      const tenantPortalUrl = `${window.location.origin}/tenant.html?tenant=${encodeURIComponent(t.name)}`;
+
+      const textMsg = `Hello ${t.name},\nYour Electricity Bill for ${cycleFormatted} is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nBill Date: ${genDate}\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}.\nPayment Date: ${t.paidDate || 'Pending'}.${fineAmount > 0 ? '\nLate Fine Applied: ₹' + fineAmount : ''}\n\nView and download your digital receipt:\n${tenantPortalUrl}\n\nPlease pay promptly.`;
+
+      try {
+        const canvas = await html2canvas(card, { backgroundColor: '#111111', scale: 2 });
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const file = new File([blob], `${t.name}_${currentCycle}_Bill.png`, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `Bill - ${t.name}`,
+            text: textMsg
+          });
+        } else {
+          downloadBillCard();
+          const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`;
+          window.open(waUrl, '_blank');
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`, '_blank');
+        }
+      }
     }
-  });
-
-  const payload = {
-    cycle: currentCycle,
-    cycles: allCycles,
-    tenant: t,
-    history: historySummary
-  };
-  const encodedPayload = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-  const tenantPortalUrl = `${window.location.origin}/tenant.html?d=${encodedPayload}`;
-
-  const textMsg = `Hello ${t.name},\nYour Electricity Bill for ${cycleFormatted} is ₹${totalAmount.toLocaleString()} (${consumed} units: ${t.prevReading} -> ${t.currReading}).\nBill Date: ${genDate}\nStatus: ${t.status.toUpperCase()}.\nDue Date: ${t.dueDate}.\nPayment Date: ${t.paidDate || 'Pending'}.${fineAmount > 0 ? '\nLate Fine Applied: ₹' + fineAmount : ''}\n\nView and download your digital receipt:\n${tenantPortalUrl}\n\nPlease pay promptly.`;
-
-  try {
-    const canvas = await html2canvas(card, { backgroundColor: '#111111', scale: 2 });
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-    const file = new File([blob], `${t.name}_${currentCycle}_Bill.png`, { type: 'image/png' });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: `Bill - ${t.name}`,
-        text: textMsg
-      });
-    } else {
-      downloadBillCard();
-      const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`;
-      window.open(waUrl, '_blank');
-    }
-  } catch (err) {
-    if (err.name !== 'AbortError') {
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`, '_blank');
-    }
-  }
-    }
-      
 
     function downloadBillCard() {
       const card = document.getElementById("bill-card");
@@ -904,6 +1020,9 @@ checkAdminAuth();
     // Startup
     initCycleSelector();
     renderList();
+    syncFromFirestore();
   </script>
 </body>
-</html>
+</html>     
+      
+    
