@@ -491,12 +491,13 @@
       }
     }
 
-    async function pushRecordToFirestore(t, cycleKey) {
+        async function pushRecordToFirestore(t, cycleKey) {
       if (!db) return;
       try {
-        const docId = `${cycleKey}_${t.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        // Use the existing t.id to guarantee in-place updates
+        const docId = t.id || `${cycleKey}_${t.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
         await db.collection('bills').doc(docId).set({
-          id: t.id,
+          id: docId,
           cycle: cycleKey,
           name: t.name,
           phone: t.phone,
@@ -517,15 +518,16 @@
       }
     }
 
-    async function deleteRecordFromFirestore(name, cycleKey) {
+    async function deleteRecordFromFirestore(id, name, cycleKey) {
       if (!db) return;
       try {
-        const docId = `${cycleKey}_${name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        const docId = id || `${cycleKey}_${name.replace(/[^a-zA-Z0-9]/g, '_')}`;
         await db.collection('bills').doc(docId).delete();
       } catch (err) {
         console.error("Firestore delete error:", err);
       }
     }
+
 
     // ==========================================
     // 3. UI RENDERING & TREND CHART
