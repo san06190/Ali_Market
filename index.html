@@ -518,15 +518,29 @@
       }
     }
 
-    async function deleteRecordFromFirestore(id, name, cycleKey) {
+        async function deleteRecordFromFirestore(docId) {
       if (!db) return;
       try {
-        const docId = id || `${cycleKey}_${name.replace(/[^a-zA-Z0-9]/g, '_')}`;
         await db.collection('bills').doc(docId).delete();
       } catch (err) {
         console.error("Firestore delete error:", err);
       }
     }
+
+    async function deleteTenant(id, name) {
+      if (!confirm(`Delete bill record for "${name}" from ${formatCycleLabel(currentCycle)}?`)) return;
+
+      // 1. Remove from local memory and save state
+      tenants = tenants.filter(t => t.id !== id);
+      localStorage.setItem(`powerbill_data_${currentCycle}`, JSON.stringify(tenants));
+      
+      // 2. Delete directly from Firestore by exact document ID
+      await deleteRecordFromFirestore(id);
+      
+      closeDetails();
+      renderList();
+    }
+
 
 
     // ==========================================
@@ -829,14 +843,7 @@
     }
 
 
-    function deleteTenant(id, name) {
-      if (confirm(`Delete bill record for "${name}" from ${formatCycleLabel(currentCycle)}?`)) {
-        tenants = tenants.filter(t => t.id !== id);
-        deleteRecordFromFirestore(name, currentCycle);
-        saveState();
-        closeDetails();
-      }
-    }
+    
 
     function toggleModal(show) {
       if (!show) {
@@ -980,6 +987,7 @@ if (overdueBtnCount) overdueBtnCount.innerText = overdueCount;
             <button onclick="togglePaid('${t.id}')" class="text-xs px-3 py-2 rounded-lg font-bold border ${t.status === 'paid' ? 'border-gray-700 text-gray-400' : 'border-green-600 bg-green-600/10 text-green-400'}">${t.status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}</button>
             <button onclick="viewTenant('${t.id}')" class="text-xs bg-gray-800 text-gray-200 px-3 py-2 rounded-lg font-bold hover:bg-gray-700">View Card</button>
             <button onclick="deleteTenant('${t.id}', '${t.name}')" class="text-xs bg-red-950/60 text-red-400 border border-red-800/60 px-2.5 py-2 rounded-lg font-bold hover:bg-red-900/80">🗑️</button>
+
           </div>
         `;
         listEl.appendChild(card);
