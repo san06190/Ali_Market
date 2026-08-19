@@ -443,13 +443,19 @@
     // ==========================================
     // 2. BULLETPROOF FIRESTORE CLOUD SYNC
     // ==========================================
-    async function syncFromFirestore() {
+      async function syncFromFirestore() {
       if (!db) return;
       try {
         const snapshot = await db.collection('bills').get();
         if (!snapshot.empty) {
           const cloudDocs = [];
-          snapshot.forEach(doc => cloudDocs.push(doc.data()));
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            cloudDocs.push({
+              ...data,
+              id: doc.id // Uses the exact Firestore document ID
+            });
+          });
 
           const uniqueCycles = [...new Set(cloudDocs.map(d => d.cycle))].filter(Boolean).sort();
           if (uniqueCycles.length > 0) {
@@ -459,7 +465,7 @@
 
           uniqueCycles.forEach(cKey => {
             const mappedList = cloudDocs.filter(d => d.cycle === cKey).map(d => ({
-              id: d.id || `${cKey}_${d.name}`,
+              id: d.id,
               name: d.name,
               phone: d.phone,
               prevReading: Number(d.prevReading),
@@ -476,7 +482,6 @@
             localStorage.setItem(`powerbill_data_${cKey}`, JSON.stringify(mappedList));
           });
 
-          // Ensure currentCycle exists
           if (!allCycles.includes(currentCycle)) {
             currentCycle = allCycles[allCycles.length - 1];
             localStorage.setItem("powerbill_current_cycle", currentCycle);
@@ -487,11 +492,11 @@
           renderList();
         }
       } catch (err) {
-        console.warn("Firestore sync fallback:", err);
+        console.warn("Firestore sync notice:", err);
       }
     }
-
-        async function pushRecordToFirestore(t, cycleKey) {
+  
+ async function pushRecordToFirestore(t, cycleKey) {
       if (!db) return;
       try {
         // Use the existing t.id to guarantee in-place updates
