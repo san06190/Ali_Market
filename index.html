@@ -717,11 +717,14 @@
       toggleModal(false);
     }
 
+        // 1. Instant Payment Confirmation on "Mark Paid"
     function togglePaid(id) {
       const tenant = tenants.find(t => t.id === id);
       if (tenant) {
-        tenant.status = tenant.status === 'paid' ? 'unpaid' : 'paid';
-        if (tenant.status === 'paid') {
+        const willBePaid = tenant.status !== 'paid';
+        tenant.status = willBePaid ? 'paid' : 'unpaid';
+        
+        if (willBePaid) {
           const now = new Date();
           const dd = String(now.getDate()).padStart(2, '0');
           const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -730,13 +733,99 @@
         } else {
           tenant.paidDate = null;
         }
+
         pushRecordToFirestore(tenant, currentCycle);
         saveState();
         if (selectedTenantForShare && selectedTenantForShare.id === id) {
           viewTenant(id);
         }
+
+        // Auto-prompt payment confirmation receipt via WhatsApp
+        if (willBePaid && tenant.phone) {
+          setTimeout(() => {
+            if (confirm(`Payment recorded for ${tenant.name}! Send payment confirmation receipt on WhatsApp?`)) {
+              sendPaymentReceiptWhatsApp(tenant);
+            }
+          }, 200);
+        }
       }
     }
+
+    function sendPaymentReceiptWhatsApp(t) {
+      const cleanPhone = t.phone ? t.phone.replace(/\D/g, '') : '';
+      const cycleFormatted = formatCycleLabel(currentCycle);
+      const tenantPortalUrl = `${window.location.origin}/tenant.html?tenant=${encodeURIComponent(t.name)}`;
+      
+      const textMsg = `✅ *Payment Received - Ali Market*\n\nHello ${t.name},\nWe have received your electricity bill payment for *${cycleFormatted}*.\n\n• Amount Paid: *₹${t.amountDue.toLocaleString()}*\n• Payment Date: *${t.paidDate}*\n• Status: *PAID & SETTLED*\n\nView and download your official receipt:\n${tenantPortalUrl}\n\nThank you for the prompt payment!`;
+
+      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`, '_blank');
+    }
+
+    // 2. Overdue Reminders Modal & Sender
+    function toggleReminderModal(show) {
+      document.getElementById('modal-reminder').classList.toggle('hidden', !show);
+    }
+
+    function openOverdueReminderModal() {
+      const unpaidList = tenants.filter(t => t.status === 'unpaid');
+      const container = document.getElementById('reminder-list-container');
+      container.innerHTML = '';
+
+      if (unpaidList.length === 0) {
+        container.innerHTML = `<p class="text-xs text-center text-emerald-400 py-6 font-bold">🎉 All bills for ${formatCycleLabel(currentCycle)} are fully paid!</p>`;
+      } else {
+        unpaidList.forEach(t => {
+          const isOverdue = checkIsOverdue(t);
+          const fineAmount = isOverdue ? (t.fine || 50) : 0;
+          const total = t.amountDue + fineAmount;
+          const hasPhone = Boolean(t.phone);
+
+          const item = document.createElement('div');
+          item.className = 'bg-gray-950 border border-gray-800 p-3 rounded-xl flex items-center justify-between gap-3';
+          item.innerHTML = `
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-white font-bold text-sm">${t.name}</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded font-black ${isOverdue ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-yellow-950 text-yellow-400'}">
+                  ${isOverdue ? 'OVERDUE' : 'DUE'}
+                </span>
+              </div>
+              <p class="text-xs text-gray-400 font-mono mt-0.5">₹${total.toLocaleString()} • Due: ${t.dueDate}</p>
+            </div>
+            <div>
+              ${hasPhone ? `
+                <button onclick="sendOverdueNoticeWhatsApp('${t.id}')" class="bg-green-600 hover:bg-green-500 active:scale-95 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1 shadow">
+                  📲 Remind
+                </button>
+              ` : `
+                <span class="text-[10px] text-gray-500 italic">No phone</span>
+              `}
+            </div>
+          `;
+          container.appendChild(item);
+        });
+      }
+
+      document.getElementById('reminder-summary-txt').innerText = `${unpaidList.length} unpaid bill(s) in ${formatCycleLabel(currentCycle)}`;
+      toggleReminderModal(true);
+    }
+
+    function sendOverdueNoticeWhatsApp(id) {
+      const t = tenants.find(item => item.id === id);
+      if (!t || !t.phone) return;
+
+      const cleanPhone = t.phone.replace(/\D/g, '');
+      const isOverdue = checkIsOverdue(t);
+      const fineAmount = isOverdue ? (t.fine || 50) : 0;
+      const totalAmount = t.amountDue + fineAmount;
+      const cycleFormatted = formatCycleLabel(currentCycle);
+      const tenantPortalUrl = `${window.location.origin}/tenant.html?tenant=${encodeURIComponent(t.name)}`;
+
+      const textMsg = `⚠️ *Payment Reminder - Ali Market*\n\nHello ${t.name},\nThis is a friendly reminder that your electricity bill for *${cycleFormatted}* is pending.\n\n• Total Amount Due: *₹${totalAmount.toLocaleString()}*${fineAmount > 0 ? ` (Includes ₹${fineAmount} late fee)` : ''}\n• Due Date: *${t.dueDate}*\n• Status: *${isOverdue ? 'OVERDUE' : 'PENDING'}*\n\nPay directly via UPI or view your bill receipt here:\n${tenantPortalUrl}\n\nPlease settle the payment at your earliest convenience.`;
+
+      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`, '_blank');
+    }
+
 
     function deleteTenant(id, name) {
       if (confirm(`Delete bill record for "${name}" from ${formatCycleLabel(currentCycle)}?`)) {
@@ -845,6 +934,11 @@
       document.getElementById('stat-paid').innerText = `${paidCount} Paid`;
       document.getElementById('stat-paid-amt').innerText = `₹${totalPaidAmt.toLocaleString()}`;
       document.getElementById('stat-overdue').innerText = `${overdueCount} Overdue`;
+
+// Add this line inside renderList() where overdueCount is calculated
+const overdueBtnCount = document.getElementById("btn-overdue-count");
+if (overdueBtnCount) overdueBtnCount.innerText = overdueCount;
+
       document.getElementById('stat-due-amt').innerText = `₹${totalPendingAmt.toLocaleString()}`;
       document.getElementById('stat-collection-rate').innerText = `${collectionPercent}%`;
       document.getElementById('stat-units-total').innerText = `${totalUnits.toLocaleString()} Units Used`;
